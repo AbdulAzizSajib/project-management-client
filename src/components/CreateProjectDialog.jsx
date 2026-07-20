@@ -1,10 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { XIcon } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { createProject } from "../features/projectSlice";
+import { getWorkspaceMembers } from "../services/workspaceService";
+import toast from "react-hot-toast";
 
 const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
 
     const { currentWorkspace } = useSelector((state) => state.workspace);
+    const dispatch = useDispatch();
+
+    // lead dropdown এর জন্য workspace members (nested user সহ আসে) — useState
+    const [members, setMembers] = useState([]);
+
+    useEffect(() => {
+        // dialog খোলা থাকলেই members আনি
+        if (isDialogOpen && currentWorkspace?.id) {
+            getWorkspaceMembers(currentWorkspace.id)
+                .then(setMembers)
+                .catch(() => setMembers([]));
+        }
+    }, [isDialogOpen, currentWorkspace?.id]);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -13,20 +29,46 @@ const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
         priority: "MEDIUM",
         start_date: "",
         end_date: "",
-        team_members: [],
-        team_lead: "",
-        progress: 0,
+        team_lead: "",   // userId
     });
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-    };
+        if (!currentWorkspace) return;
 
-    const removeTeamMember = (email) => {
-        setFormData((prev) => ({ ...prev, team_members: prev.team_members.filter(m => m !== email) }));
+        setIsSubmitting(true);
+        try {
+            // backend যে shape চায় সেভাবে সাজাই (camelCase + ISO date)
+            const payload = {
+                name: formData.name,
+                description: formData.description,
+                status: formData.status,
+                priority: formData.priority,
+                startDate: formData.start_date
+                    ? new Date(formData.start_date).toISOString()
+                    : undefined,
+                endDate: formData.end_date
+                    ? new Date(formData.end_date).toISOString()
+                    : undefined,
+                workspaceId: currentWorkspace.id,
+                teamLeadId: formData.team_lead || null,
+            };
+
+            await dispatch(createProject(payload)).unwrap();
+            toast.success("Project created!");
+            setIsDialogOpen(false);
+            // form reset
+            setFormData({
+                name: "", description: "", status: "PLANNING", priority: "MEDIUM",
+                start_date: "", end_date: "", team_lead: "",
+            });
+        } catch (message) {
+            toast.error(message || "Failed to create project");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isDialogOpen) return null;
@@ -96,49 +138,18 @@ const CreateProjectDialog = ({ isDialogOpen, setIsDialogOpen }) => {
                     {/* Lead */}
                     <div>
                         <label className="block text-sm mb-1">Project Lead</label>
-                        <select value={formData.team_lead} onChange={(e) => setFormData({ ...formData, team_lead: e.target.value, team_members: e.target.value ? [...new Set([...formData.team_members, e.target.value])] : formData.team_members, })} className="w-full px-3 py-2 rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 mt-1 text-zinc-900 dark:text-zinc-200 text-sm" >
-                            <option value="">No lead</option>
-                            {currentWorkspace?.members?.map((member) => (
-                                <option key={member.user.email} value={member.user.email}>
-                                    {member.user.email}
+                        <select value={formData.team_lead} onChange={(e) => setFormData({ ...formData, team_lead: e.target.value })} className="w-full px-3 py-2 rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 mt-1 text-zinc-900 dark:text-zinc-200 text-sm" >
+                            <option value="">No lead (defaults to you)</option>
+                            {members.map((member) => (
+                                <option key={member.userId} value={member.userId}>
+                                    {member.user?.name || member.user?.email}
                                 </option>
                             ))}
                         </select>
                     </div>
 
-                    {/* Team Members */}
-                    <div>
-                        <label className="block text-sm mb-1">Team Members</label>
-                        <select className="w-full px-3 py-2 rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 mt-1 text-zinc-900 dark:text-zinc-200 text-sm"
-                            onChange={(e) => {
-                                if (e.target.value && !formData.team_members.includes(e.target.value)) {
-                                    setFormData((prev) => ({ ...prev, team_members: [...prev.team_members, e.target.value] }));
-                                }
-                            }}
-                        >
-                            <option value="">Add team members</option>
-                            {currentWorkspace?.members
-                                ?.filter((email) => !formData.team_members.includes(email))
-                                .map((member) => (
-                                    <option key={member.user.email} value={member.email}>
-                                        {member.user.email}
-                                    </option>
-                                ))}
-                        </select>
-
-                        {formData.team_members.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                {formData.team_members.map((email) => (
-                                    <div key={email} className="flex items-center gap-1 bg-blue-200/50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 px-2 py-1 rounded-md text-sm" >
-                                        {email}
-                                        <button type="button" onClick={() => removeTeamMember(email)} className="ml-1 hover:bg-blue-300/30 dark:hover:bg-blue-500/30 rounded" >
-                                            <XIcon className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    {/* NOTE: project বানানোর পর member add করা যাবে (project detail
+                        পেজ থেকে) — backend create এ team_members নেয় না, শুধু lead। */}
 
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-2 text-sm">

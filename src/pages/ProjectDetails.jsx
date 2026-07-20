@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeftIcon, PlusIcon, SettingsIcon, BarChart3Icon, CalendarIcon, FileStackIcon, ZapIcon } from "lucide-react";
+import { ArrowLeftIcon, PlusIcon, SettingsIcon, BarChart3Icon, CalendarIcon, FileStackIcon, ZapIcon, Loader2Icon } from "lucide-react";
 import ProjectAnalytics from "../components/ProjectAnalytics";
 import ProjectSettings from "../components/ProjectSettings";
 import CreateTaskDialog from "../components/CreateTaskDialog";
 import ProjectCalendar from "../components/ProjectCalendar";
 import ProjectTasks from "../components/ProjectTasks";
+import { getProjectById } from "../services/projectService";
+import { getProjectTasks } from "../services/taskService";
 
 export default function ProjectDetail() {
 
@@ -15,10 +16,11 @@ export default function ProjectDetail() {
     const id = searchParams.get('id');
 
     const navigate = useNavigate();
-    const projects = useSelector((state) => state?.workspace?.currentWorkspace?.projects || []);
 
+    // project + tasks আলাদা API থেকে (Redux ছাড়া — শুধু এই পেজে লাগে)
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [showCreateTask, setShowCreateTask] = useState(false);
     const [activeTab, setActiveTab] = useState(tab || "tasks");
 
@@ -26,13 +28,24 @@ export default function ProjectDetail() {
         if (tab) setActiveTab(tab);
     }, [tab]);
 
+    // tasks আবার আনার helper (create/update/delete এর পর কল করি)
+    const reloadTasks = useCallback(() => {
+        if (!id) return;
+        getProjectTasks(id).then(setTasks).catch(() => setTasks([]));
+    }, [id]);
+
+    // project details + tasks একসাথে আনি
     useEffect(() => {
-        if (projects && projects.length > 0) {
-            const proj = projects.find((p) => p.id === id);
-            setProject(proj);
-            setTasks(proj?.tasks || []);
-        }
-    }, [id, projects]);
+        if (!id) return;
+        setLoading(true);
+        Promise.all([getProjectById(id), getProjectTasks(id)])
+            .then(([proj, tsk]) => {
+                setProject(proj);
+                setTasks(tsk);
+            })
+            .catch(() => setProject(null))
+            .finally(() => setLoading(false));
+    }, [id]);
 
     const statusColors = {
         PLANNING: "bg-zinc-200 text-zinc-900 dark:bg-zinc-600 dark:text-zinc-200",
@@ -41,6 +54,14 @@ export default function ProjectDetail() {
         COMPLETED: "bg-blue-200 text-blue-900 dark:bg-blue-500 dark:text-blue-900",
         CANCELLED: "bg-red-200 text-red-900 dark:bg-red-500 dark:text-red-900",
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <Loader2Icon className="size-7 text-blue-500 animate-spin" />
+            </div>
+        );
+    }
 
     if (!project) {
         return (
@@ -111,7 +132,7 @@ export default function ProjectDetail() {
                 <div className="mt-6">
                     {activeTab === "tasks" && (
                         <div className=" dark:bg-zinc-900/40 rounded max-w-6xl">
-                            <ProjectTasks tasks={tasks} />
+                            <ProjectTasks tasks={tasks} onTasksChange={reloadTasks} />
                         </div>
                     )}
                     {activeTab === "analytics" && (
@@ -133,7 +154,7 @@ export default function ProjectDetail() {
             </div>
 
             {/* Create Task Modal */}
-            {showCreateTask && <CreateTaskDialog showCreateTask={showCreateTask} setShowCreateTask={setShowCreateTask} projectId={id} />}
+            {showCreateTask && <CreateTaskDialog showCreateTask={showCreateTask} setShowCreateTask={setShowCreateTask} projectId={id} onCreated={reloadTasks} />}
         </div>
     );
 }

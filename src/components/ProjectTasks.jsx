@@ -1,9 +1,8 @@
 import { format } from "date-fns";
 import toast from "react-hot-toast";
-import { useDispatch } from "react-redux";
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteTask, updateTask } from "../features/workspaceSlice";
+import { updateTaskStatus, deleteTask } from "../services/taskService";
 import { Bug, CalendarIcon, GitCommit, MessageSquare, Square, Trash, XIcon, Zap } from "lucide-react";
 
 const typeIcons = {
@@ -20,8 +19,7 @@ const priorityTexts = {
     HIGH: { background: "bg-emerald-100 dark:bg-emerald-950", prioritycolor: "text-emerald-600 dark:text-emerald-400" },
 };
 
-const ProjectTasks = ({ tasks }) => {
-    const dispatch = useDispatch();
+const ProjectTasks = ({ tasks, onTasksChange }) => {
     const navigate = useNavigate();
     const [selectedTasks, setSelectedTasks] = useState([]);
 
@@ -56,40 +54,31 @@ const ProjectTasks = ({ tasks }) => {
 
     const handleStatusChange = async (taskId, newStatus) => {
         try {
-            toast.loading("Updating status...");
-
-            //  Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            let updatedTask = structuredClone(tasks.find((t) => t.id === taskId));
-            updatedTask.status = newStatus;
-            dispatch(updateTask(updatedTask));
-
-            toast.dismissAll();
-            toast.success("Task status updated successfully");
+            // ⚠️ backend এ transition rule আছে (TODO→IN_PROGRESS→IN_REVIEW→DONE)।
+            // ভুল transition হলে backend 400 দেবে — সেটা toast এ দেখাই।
+            await updateTaskStatus(taskId, newStatus);
+            toast.success("Task status updated");
+            onTasksChange?.(); // parent এ tasks reload
         } catch (error) {
-            toast.dismissAll();
-            toast.error(error?.response?.data?.message || error.message);
+            toast.error(error?.response?.data?.message || "Failed to update status");
         }
     };
 
     const handleDelete = async () => {
+        const confirm = window.confirm("Are you sure you want to delete the selected tasks?");
+        if (!confirm) return;
+
         try {
-            const confirm = window.confirm("Are you sure you want to delete the selected tasks?");
-            if (!confirm) return;
-
             toast.loading("Deleting tasks...");
-
-            //  Simulate API call
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            dispatch(deleteTask(selectedTasks));
-
-            toast.dismissAll();
-            toast.success("Tasks deleted successfully");
+            // একাধিক task — প্রতিটা delete করি
+            await Promise.all(selectedTasks.map((id) => deleteTask(id)));
+            toast.dismiss();
+            toast.success("Tasks deleted");
+            setSelectedTasks([]);
+            onTasksChange?.();
         } catch (error) {
-            toast.dismissAll();
-            toast.error(error?.response?.data?.message || error.message);
+            toast.dismiss();
+            toast.error(error?.response?.data?.message || "Failed to delete");
         }
     };
 
@@ -193,6 +182,7 @@ const ProjectTasks = ({ tasks }) => {
                                                     <select name="status" onChange={(e) => handleStatusChange(task.id, e.target.value)} value={task.status} className="group-hover:ring ring-zinc-100 outline-none px-2 pr-4 py-1 rounded text-sm text-zinc-900 dark:text-zinc-200 cursor-pointer" >
                                                         <option value="TODO">To Do</option>
                                                         <option value="IN_PROGRESS">In Progress</option>
+                                                        <option value="IN_REVIEW">In Review</option>
                                                         <option value="DONE">Done</option>
                                                     </select>
                                                 </td>
@@ -205,7 +195,7 @@ const ProjectTasks = ({ tasks }) => {
                                                 <td className="px-4 py-2">
                                                     <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400">
                                                         <CalendarIcon className="size-4" />
-                                                        {format(new Date(task.due_date), "dd MMMM")}
+                                                        {task.dueDate ? format(new Date(task.dueDate), "dd MMMM") : "-"}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -263,7 +253,7 @@ const ProjectTasks = ({ tasks }) => {
 
                                         <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                                             <CalendarIcon className="size-4" />
-                                            {format(new Date(task.due_date), "dd MMMM")}
+                                            {task.dueDate ? format(new Date(task.dueDate), "dd MMMM") : "-"}
                                         </div>
                                     </div>
                                 );

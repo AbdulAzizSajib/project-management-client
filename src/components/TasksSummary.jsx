@@ -4,19 +4,21 @@ import { useSelector } from "react-redux";
 
 export default function TasksSummary() {
 
-    const { currentWorkspace } = useSelector((state) => state.workspace);
+    const projects = useSelector((state) => state.project.projects);
     const user = { id: 'user_1' }
     const [tasks, setTasks] = useState([]);
 
     // Get all tasks for all projects in current workspace
     useEffect(() => {
-        if (currentWorkspace) {
-            setTasks(currentWorkspace.projects.flatMap((project) => project.tasks));
+        if (!Array.isArray(projects)) {
+            setTasks([]);
+            return;
         }
-    }, [currentWorkspace]);
+        setTasks(projects.flatMap((project) => project.tasks || []));
+    }, [projects]);
 
     const myTasks = tasks.filter(i => i.assigneeId === user.id);
-    const overdueTasks = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'DONE');
+    const overdueTasks = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE');
     const inProgressIssues = tasks.filter(i => i.status === 'IN_PROGRESS');
 
     const summaryCards = [

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Calendar, UsersIcon, FolderOpen } from "lucide-react";
+import { ArrowRight, Calendar, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import CreateProjectDialog from "./CreateProjectDialog";
@@ -21,12 +21,9 @@ const ProjectOverview = () => {
     };
 
     const currentWorkspace = useSelector((state) => state?.workspace?.currentWorkspace || null);
+    // projects Redux থেকে (backend /projects)
+    const projects = useSelector((state) => state.project.projects);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [projects, setProjects] = useState([]);
-
-    useEffect(() => {
-        setProjects(currentWorkspace?.projects || []);
-    }, [currentWorkspace]);
 
     return currentWorkspace && (
         <div className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 rounded-lg overflow-hidden">
@@ -72,16 +69,10 @@ const ProjectOverview = () => {
 
                                 <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-500 mb-3">
                                     <div className="flex items-center gap-4">
-                                        {project.members?.length > 0 && (
-                                            <div className="flex items-center gap-1">
-                                                <UsersIcon className="w-3 h-3" />
-                                                {project.members.length} members
-                                            </div>
-                                        )}
-                                        {project.end_date && (
+                                        {project.endDate && (
                                             <div className="flex items-center gap-1">
                                                 <Calendar className="w-3 h-3" />
-                                                {format(new Date(project.end_date), "MMM d, yyyy")}
+                                                {format(new Date(project.endDate), "MMM d, yyyy")}
                                             </div>
                                         )}
                                     </div>

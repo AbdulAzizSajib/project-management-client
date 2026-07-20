@@ -4,17 +4,25 @@ import Sidebar from '../components/Sidebar'
 import { Outlet } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { loadTheme } from '../features/themeSlice'
+import { fetchProjects } from '../features/projectSlice'
 import { Loader2Icon } from 'lucide-react'
 
 const Layout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-    const { loading } = useSelector((state) => state.workspace)
+    const { loading, currentWorkspace } = useSelector((state) => state.workspace)
     const dispatch = useDispatch()
 
     // Initial load of theme
     useEffect(() => {
         dispatch(loadTheme())
     }, [])
+
+    // workspace বদলালে ঐ workspace এর projects আনি
+    useEffect(() => {
+        if (currentWorkspace?.id) {
+            dispatch(fetchProjects(currentWorkspace.id))
+        }
+    }, [currentWorkspace?.id, dispatch])
 
     if (loading) return (
         <div className='flex items-center justify-center h-screen bg-white dark:bg-zinc-950'>

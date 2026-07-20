@@ -1,12 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { useSelector } from "react-redux";
 import { format } from "date-fns";
+import toast from "react-hot-toast";
+import { createTask } from "../services/taskService";
+import { getProjectMembers } from "../services/projectService";
 
-export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, projectId }) {
-    const currentWorkspace = useSelector((state) => state.workspace?.currentWorkspace || null);
-    const project = currentWorkspace?.projects.find((p) => p.id === projectId);
-    const teamMembers = project?.members || [];
+export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, projectId, onCreated }) {
+    // assignee dropdown এর জন্য project members (Redux ছাড়া — useState)
+    // ⚠️ assignee অবশ্যই project member হতে হবে (backend rule)
+    const [teamMembers, setTeamMembers] = useState([]);
+
+    useEffect(() => {
+        if (showCreateTask && projectId) {
+            getProjectMembers(projectId)
+                .then(setTeamMembers)
+                .catch(() => setTeamMembers([]));
+        }
+    }, [showCreateTask, projectId]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -21,8 +31,29 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-
+        setIsSubmitting(true);
+        try {
+            // backend shape: camelCase + dueDate ISO datetime
+            const payload = {
+                title: formData.title,
+                description: formData.description || undefined,
+                type: formData.type,
+                status: formData.status,
+                priority: formData.priority,
+                assigneeId: formData.assigneeId || null,
+                dueDate: formData.due_date
+                    ? new Date(formData.due_date).toISOString()
+                    : null,
+            };
+            await createTask(projectId, payload);
+            toast.success("Task created!");
+            onCreated?.();          // parent এ tasks reload
+            setShowCreateTask(false);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to create task");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return showCreateTask ? (
@@ -73,8 +104,8 @@ export default function CreateTaskDialog({ showCreateTask, setShowCreateTask, pr
                             <select value={formData.assigneeId} onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })} className="w-full rounded dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 px-3 py-2 text-zinc-900 dark:text-zinc-200 text-sm mt-1" >
                                 <option value="">Unassigned</option>
                                 {teamMembers.map((member) => (
-                                    <option key={member?.user.id} value={member?.user.id}>
-                                        {member?.user.email}
+                                    <option key={member?.user?.id} value={member?.user?.id}>
+                                        {member?.user?.name || member?.user?.email}
                                     </option>
                                 ))}
                             </select>

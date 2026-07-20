@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { UsersIcon, Search, UserPlus, Shield, Activity } from "lucide-react";
+import { UsersIcon, Search, UserPlus, Activity } from "lucide-react";
 import InviteMemberDialog from "../components/InviteMemberDialog";
 import { useSelector } from "react-redux";
+import { getWorkspaceMembers } from "../services/workspaceService";
 
 const Team = () => {
 
-    const [tasks, setTasks] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState([]);   // workspace members (nested user সহ)
     const currentWorkspace = useSelector((state) => state?.workspace?.currentWorkspace || null);
-    const projects = currentWorkspace?.projects || [];
+    // Active Projects card এর জন্য project list Redux থেকে
+    const projects = useSelector((state) => state.project.projects);
 
     const filteredUsers = users.filter(
         (user) =>
@@ -18,10 +19,14 @@ const Team = () => {
             user?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // workspace members real API থেকে আনি (nested user: {id,name,email,image,role})
     useEffect(() => {
-        setUsers(currentWorkspace?.members || []);
-        setTasks(currentWorkspace?.projects?.reduce((acc, project) => [...acc, ...project.tasks], []) || []);
-    }, [currentWorkspace]);
+        if (currentWorkspace?.id) {
+            getWorkspaceMembers(currentWorkspace.id)
+                .then(setUsers)
+                .catch(() => setUsers([]));
+        }
+    }, [currentWorkspace?.id]);
 
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
@@ -69,15 +74,15 @@ const Team = () => {
                     </div>
                 </div>
 
-                {/* Total Tasks */}
+                {/* Total Projects */}
                 <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
-                            <p className="text-sm text-gray-500 dark:text-zinc-400">Total Tasks</p>
-                            <p className="text-xl font-bold text-gray-900 dark:text-white">{tasks.length}</p>
+                            <p className="text-sm text-gray-500 dark:text-zinc-400">Total Projects</p>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white">{projects.length}</p>
                         </div>
                         <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-500/10">
-                            <Shield className="size-4 text-purple-500 dark:text-purple-200" />
+                            <Activity className="size-4 text-purple-500 dark:text-purple-200" />
                         </div>
                     </div>
                 </div>

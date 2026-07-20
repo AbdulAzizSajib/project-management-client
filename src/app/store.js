@@ -1,10 +1,21 @@
 import { configureStore } from '@reduxjs/toolkit'
 import workspaceReducer from '../features/workspaceSlice'
 import themeReducer from '../features/themeSlice'
+import authReducer from '../features/authSlice'
+import projectReducer from '../features/projectSlice'
 
+// Redux এ শুধু সেই state যা অনেক জায়গায় লাগে:
+//   auth      → logged-in user (Navbar, routes সব জায়গায়)
+//   workspace → list + current (Sidebar, Dropdown, Gate)
+//   project   → list (Sidebar এর ২টা, Dashboard এর ৪টা, Projects পেজ)
+//   theme     → dark/light (সব জায়গায়)
+// বাকি সব (task, comment, member, invite, notification, dashboard)
+//   → useState + services/*
 export const store = configureStore({
     reducer: {
+        auth: authReducer,
         workspace: workspaceReducer,
+        project: projectReducer,
         theme: themeReducer,
     },
 })

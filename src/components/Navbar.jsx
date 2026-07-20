@@ -1,13 +1,25 @@
-import { SearchIcon, PanelLeft } from 'lucide-react'
+import { SearchIcon, PanelLeft, LogOutIcon } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleTheme } from '../features/themeSlice'
+import { logoutUser } from '../features/authSlice'
 import { MoonIcon, SunIcon } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
+import toast from 'react-hot-toast'
+import NotificationBell from './NotificationBell'
 
 const Navbar = ({ setIsSidebarOpen }) => {
 
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { theme } = useSelector(state => state.theme);
+
+    // logout: thunk চালাই → cookie মুছে যায় → login পেজে পাঠাই
+    const handleLogout = async () => {
+        await dispatch(logoutUser());
+        toast.success("Logged out");
+        navigate("/login");
+    };
 
     return (
         <div className="w-full bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-6 xl:px-16 py-3 flex-shrink-0">
@@ -42,8 +54,16 @@ const Navbar = ({ setIsSidebarOpen }) => {
                         }
                     </button>
 
+                    {/* Notifications */}
+                    <NotificationBell />
+
                     {/* User Button */}
                     <img src={assets.profile_img_a} alt="User Avatar" className="size-7 rounded-full" />
+
+                    {/* Logout Button */}
+                    <button onClick={handleLogout} title="Log out" className="size-8 flex items-center justify-center bg-white dark:bg-zinc-800 shadow rounded-lg transition hover:scale-105 active:scale-95">
+                        <LogOutIcon className="size-4 text-gray-800 dark:text-gray-200" />
+                    </button>
                 </div>
             </div>
         </div>

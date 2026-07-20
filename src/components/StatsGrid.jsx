@@ -6,6 +6,8 @@ export default function StatsGrid() {
     const currentWorkspace = useSelector(
         (state) => state?.workspace?.currentWorkspace || null
     );
+    // projects এখন আলাদা slice এ (backend /projects থেকে)
+    const projects = useSelector((state) => state.project.projects);
 
     const [stats, setStats] = useState({
         totalProjects: 0,
@@ -51,31 +53,31 @@ export default function StatsGrid() {
     ];
 
     useEffect(() => {
-        if (currentWorkspace) {
-            setStats({
-                totalProjects: currentWorkspace.projects.length,
-                activeProjects: currentWorkspace.projects.filter(
-                    (p) => p.status !== "CANCELLED" && p.status !== "COMPLETED"
-                ).length,
-                completedProjects: currentWorkspace.projects
-                    .filter((p) => p.status === "COMPLETED")
-                    .reduce((acc, project) => acc + project.tasks.length, 0),
-                myTasks: currentWorkspace.projects.reduce(
-                    (acc, project) =>
-                        acc +
-                        project.tasks.filter(
-                            (t) => t.assignee?.email === currentWorkspace.owner.email
-                        ).length,
-                    0
-                ),
-                overdueIssues: currentWorkspace.projects.reduce(
-                    (acc, project) =>
-                        acc + project.tasks.filter((t) => t.due_date < new Date()).length,
-                    0
-                ),
-            });
-        }
-    }, [currentWorkspace]);
+        if (!Array.isArray(projects)) return;
+
+        const now = new Date();
+
+        // NOTE: task-ভিত্তিক হিসাব (myTasks, overdue) করতে tasks লাগে,
+        // যা /projects list এ nested নাও থাকতে পারে। থাকলে হিসাব হবে,
+        // না থাকলে 0 — crash হবে না।
+        setStats({
+            totalProjects: projects.length,
+            activeProjects: projects.filter(
+                (p) => p.status !== "CANCELLED" && p.status !== "COMPLETED"
+            ).length,
+            completedProjects: projects.filter((p) => p.status === "COMPLETED").length,
+            myTasks: projects.reduce(
+                (acc, project) => acc + (project.tasks?.length || 0),
+                0
+            ),
+            overdueIssues: projects.reduce(
+                (acc, project) =>
+                    acc +
+                    (project.tasks || []).filter((t) => t.dueDate && new Date(t.dueDate) < now).length,
+                0
+            ),
+        });
+    }, [projects]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 my-9">

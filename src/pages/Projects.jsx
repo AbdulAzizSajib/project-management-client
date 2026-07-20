@@ -6,9 +6,7 @@ import CreateProjectDialog from "../components/CreateProjectDialog";
 
 export default function Projects() {
     
-    const projects = useSelector(
-        (state) => state?.workspace?.currentWorkspace?.projects || []
-    );
+    const projects = useSelector((state) => state.project.projects);
 
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");

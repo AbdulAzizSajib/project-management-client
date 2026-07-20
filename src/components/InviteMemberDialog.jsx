@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Mail, UserPlus } from "lucide-react";
 import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { inviteToWorkspace } from "../services/workspaceService";
 
 const InviteMemberDialog = ({ isDialogOpen, setIsDialogOpen }) => {
 
@@ -8,12 +10,23 @@ const InviteMemberDialog = ({ isDialogOpen, setIsDialogOpen }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         email: "",
-        role: "org:member",
+        role: "MEMBER",   // backend enum: ADMIN | MEMBER
     });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        if (!currentWorkspace) return;
+        setIsSubmitting(true);
+        try {
+            await inviteToWorkspace(currentWorkspace.id, formData.email, formData.role);
+            toast.success("Invitation sent!");
+            setFormData({ email: "", role: "MEMBER" });
+            setIsDialogOpen(false);
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to send invitation");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (!isDialogOpen) return null;
@@ -50,8 +63,8 @@ const InviteMemberDialog = ({ isDialogOpen, setIsDialogOpen }) => {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-zinc-900 dark:text-zinc-200">Role</label>
                         <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full rounded border border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200 py-2 px-3 mt-1 focus:outline-none focus:border-blue-500 text-sm" >
-                            <option value="org:member">Member</option>
-                            <option value="org:admin">Admin</option>
+                            <option value="MEMBER">Member</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
                     </div>
 
