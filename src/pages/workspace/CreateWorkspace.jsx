@@ -75,8 +75,8 @@ const CreateWorkspace = () => {
             <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm p-6">
                 {/* empty state heading (প্রথম workspace হলে) */}
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="size-9 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                        <Building2Icon className="size-5 text-blue-600 dark:text-blue-400" />
+                    <div className="size-9 flex items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10">
+                        <Building2Icon className="size-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                         Create workspace
@@ -95,7 +95,7 @@ const CreateWorkspace = () => {
                             Workspace image <span className="text-gray-400">(optional)</span>
                         </label>
                         <div className="flex items-center gap-3">
-                            <label className="size-16 flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-zinc-700 cursor-pointer overflow-hidden hover:border-blue-500 transition">
+                            <label className="size-16 flex items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-zinc-700 cursor-pointer overflow-hidden hover:border-primary-500 transition">
                                 {preview ? (
                                     <img src={preview} alt="preview" className="size-full object-cover" />
                                 ) : (
@@ -125,7 +125,7 @@ const CreateWorkspace = () => {
                             onChange={(e) => handleName(e.target.value)}
                             required
                             placeholder="My Workspace"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
@@ -140,7 +140,7 @@ const CreateWorkspace = () => {
                             onChange={(e) => setSlug(slugify(e.target.value))}
                             required
                             placeholder="my-workspace"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
@@ -154,14 +154,14 @@ const CreateWorkspace = () => {
                             onChange={(e) => setDescription(e.target.value)}
                             rows={3}
                             placeholder="What is this workspace for?"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 resize-none"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
+                        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
                     >
                         {submitting && <Loader2Icon className="size-4 animate-spin" />}
                         {submitting ? "Creating..." : "Create workspace"}

@@ -40,7 +40,7 @@ export default function TasksSummary() {
             title: "In Progress",
             count: inProgressIssues.length,
             icon: Clock,
-            color: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-400",
+            color: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-400",
             items: inProgressIssues.slice(0, 3)
         }
     ];
@@ -48,7 +48,7 @@ export default function TasksSummary() {
     return (
         <div className="space-y-6">
             {summaryCards.map((card) => (
-                <div key={card.title} className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-200 rounded-lg overflow-hidden">
+                <div key={card.title} className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl overflow-hidden">
                     <div className="border-b border-zinc-200 dark:border-zinc-800 p-4 pb-3">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg">

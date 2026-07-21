@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { registerUser } from "../../features/authSlice";
+import GoogleLoginButton from "../../components/GoogleLoginButton";
 import toast from "react-hot-toast";
 import { Loader2Icon } from "lucide-react";
 
@@ -61,7 +62,7 @@ const Register = () => {
                             onChange={handleChange}
                             required
                             placeholder="John Doe"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
@@ -75,7 +76,7 @@ const Register = () => {
                             required
                             readOnly={lockEmail}
                             placeholder="you@example.com"
-                            className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                            className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 ${
                                 lockEmail
                                     ? "cursor-not-allowed opacity-70 bg-gray-50 dark:bg-zinc-800"
                                     : ""
@@ -98,7 +99,7 @@ const Register = () => {
                             required
                             minLength={6}
                             placeholder="At least 6 characters"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
@@ -111,23 +112,36 @@ const Register = () => {
                             onChange={handleChange}
                             required
                             placeholder="01700000000"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
+                        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
                     >
                         {loading && <Loader2Icon className="size-4 animate-spin" />}
                         {loading ? "Creating..." : "Create account"}
                     </button>
                 </form>
 
+                {/* invite flow e email locked — tokhon Google login diye lock email
+                    bypass hote pare, tai sudhu normal signup e Google button dekhai। */}
+                {!lockEmail && (
+                    <>
+                        <div className="flex items-center gap-3 my-5">
+                            <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
+                            <span className="text-xs text-gray-400 dark:text-zinc-500">or</span>
+                            <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
+                        </div>
+                        <GoogleLoginButton />
+                    </>
+                )}
+
                 <p className="text-sm text-gray-500 dark:text-zinc-400 mt-5 text-center">
                     Already have an account?{" "}
-                    <Link to="/login" className="text-blue-600 hover:underline">
+                    <Link to="/login" className="text-primary-600 hover:text-primary-500 hover:underline">
                         Log in
                     </Link>
                 </p>

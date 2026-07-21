@@ -66,7 +66,7 @@ const Invitations = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center h-screen bg-white dark:bg-zinc-950">
-                <Loader2Icon className="size-7 text-blue-500 animate-spin" />
+                <Loader2Icon className="size-7 text-primary-500 animate-spin" />
             </div>
         );
     }
@@ -75,8 +75,8 @@ const Invitations = () => {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4">
             <div className="w-full max-w-md">
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="size-9 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                        <MailIcon className="size-5 text-blue-600 dark:text-blue-400" />
+                    <div className="size-9 flex items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10">
+                        <MailIcon className="size-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                         Your invitations
@@ -115,7 +115,7 @@ const Invitations = () => {
                                     onClick={() => handleAccept(invite)}
                                     disabled={busyId === invite.id}
                                     title="Accept"
-                                    className="h-8 px-3 flex items-center gap-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm disabled:opacity-60 transition"
+                                    className="h-8 px-3 flex items-center gap-1.5 rounded-md bg-primary-600 hover:bg-primary-700 text-white text-sm disabled:opacity-60 transition"
                                 >
                                     {busyId === invite.id ? (
                                         <Loader2Icon className="size-4 animate-spin" />
@@ -131,7 +131,7 @@ const Invitations = () => {
 
                 <button
                     onClick={() => navigate("/workspace/create")}
-                    className="mt-6 w-full text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="mt-6 w-full text-sm text-primary-600 dark:text-primary-400 hover:underline"
                 >
                     Or create your own workspace instead
                 </button>

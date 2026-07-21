@@ -1,44 +1,35 @@
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { verifyEmail } from "../../features/authSlice";
-import { resendVerificationOtp } from "../../services/authService";
+import { resetPassword, resendPasswordResetOtp } from "../../services/authService";
 import toast from "react-hot-toast";
 import { Loader2Icon } from "lucide-react";
 
-const VerifyEmail = () => {
-    const dispatch = useDispatch();
+// OTP + notun password diye password reset kore.
+// email ta ForgotPassword page theke state e ashe (prefill), sorasori ele input diyeo dewa jay।
+const ResetPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Register পেজ থেকে navigate করার সময় email পাঠিয়েছিলাম।
-    // সেটা এখানে location.state থেকে নিই। সরাসরি এলে খালি থাকবে,
-    // তাই ইনপুট box দিয়েও email দেওয়া যায়।
     const [email, setEmail] = useState(location.state?.email || "");
     const [otp, setOtp] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
-
-    // invite flow থেকে এলে verify শেষে যেখানে ফেরত যেতে হবে (accept পেজ)।
-    // এটা login পেজে এগিয়ে দিই — কারণ verify এর পরও Redux এ user বসে না,
-    // login করলেই user সেট হয় আর তারপর `from` এ (accept পেজে) ফেরত যায়।
-    const from = location.state?.from;
-
-    const { loading } = useSelector((state) => state.auth);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
-            await dispatch(verifyEmail({ email, otp })).unwrap();
-            toast.success("Email verified! Please log in.");
-            // invite flow হলে email + from নিয়ে login এ পাঠাই — login শেষে
-            // accept পেজে ফিরে invitation টা accept হবে।
-            navigate("/login", { state: from ? { from, email } : undefined });
-        } catch (message) {
-            toast.error(message || "Verification failed");
+            await resetPassword({ email, otp, newPassword });
+            toast.success("Password reset! Please log in.");
+            navigate("/login", { state: { email } });
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to reset password");
+        } finally {
+            setLoading(false);
         }
     };
 
-    // OTP abar pathanor button — email na thakle age input chay।
     const handleResend = async () => {
         if (!email) {
             toast.error("Enter your email first");
@@ -46,10 +37,10 @@ const VerifyEmail = () => {
         }
         setResending(true);
         try {
-            await resendVerificationOtp(email);
-            toast.success("New OTP sent to your email");
+            await resendPasswordResetOtp(email);
+            toast.success("New reset code sent");
         } catch (error) {
-            toast.error(error?.response?.data?.message || "Failed to resend OTP");
+            toast.error(error?.response?.data?.message || "Failed to resend code");
         } finally {
             setResending(false);
         }
@@ -58,9 +49,9 @@ const VerifyEmail = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-zinc-950 px-4">
             <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm p-6">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Verify email</h1>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white mb-1">Reset password</h1>
                 <p className="text-sm text-gray-500 dark:text-zinc-400 mb-6">
-                    Enter the 4-digit code sent to your email
+                    Enter the code sent to your email and a new password
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,13 +80,26 @@ const VerifyEmail = () => {
                         />
                     </div>
 
+                    <div>
+                        <label className="block text-sm text-gray-700 dark:text-zinc-300 mb-1">New Password</label>
+                        <input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            placeholder="••••••"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                    </div>
+
                     <button
                         type="submit"
                         disabled={loading}
                         className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
                     >
                         {loading && <Loader2Icon className="size-4 animate-spin" />}
-                        {loading ? "Verifying..." : "Verify"}
+                        {loading ? "Resetting..." : "Reset password"}
                     </button>
                 </form>
 
@@ -105,7 +109,7 @@ const VerifyEmail = () => {
                     disabled={resending}
                     className="w-full mt-3 text-sm text-primary-600 hover:text-primary-500 hover:underline disabled:opacity-60"
                 >
-                    {resending ? "Resending..." : "Resend OTP"}
+                    {resending ? "Resending..." : "Resend code"}
                 </button>
 
                 <p className="text-sm text-gray-500 dark:text-zinc-400 mt-4 text-center">
@@ -119,4 +123,4 @@ const VerifyEmail = () => {
     );
 };
 
-export default VerifyEmail;
+export default ResetPassword;

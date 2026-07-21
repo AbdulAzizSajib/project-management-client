@@ -38,7 +38,7 @@ const Team = () => {
                         Manage team members and their contributions
                     </p>
                 </div>
-                <button onClick={() => setIsDialogOpen(true)} className="flex items-center px-5 py-2 rounded text-sm bg-gradient-to-br from-blue-500 to-blue-600 hover:opacity-90 text-white transition" >
+                <button onClick={() => setIsDialogOpen(true)} className="flex items-center px-5 py-2 rounded text-sm bg-gradient-to-br from-primary-500 to-primary-600 shadow-brand hover:opacity-90 text-white transition" >
                     <UserPlus className="w-4 h-4 mr-2" /> Invite Member
                 </button>
                 <InviteMemberDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} />
@@ -47,20 +47,20 @@ const Team = () => {
             {/* Stats Cards */}
             <div className="flex flex-wrap gap-4">
                 {/* Total Members */}
-                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
+                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md transition p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-zinc-400">Total Members</p>
                             <p className="text-xl font-bold text-gray-900 dark:text-white">{users.length}</p>
                         </div>
-                        <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-500/10">
-                            <UsersIcon className="size-4 text-blue-500 dark:text-blue-200" />
+                        <div className="p-3 rounded-xl bg-sky-100 dark:bg-sky-500/10">
+                            <UsersIcon className="size-4 text-sky-500 dark:text-sky-200" />
                         </div>
                     </div>
                 </div>
 
                 {/* Active Projects */}
-                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
+                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md transition p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-zinc-400">Active Projects</p>
@@ -75,7 +75,7 @@ const Team = () => {
                 </div>
 
                 {/* Total Projects */}
-                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-lg p-6">
+                <div className="max-sm:w-full dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-gray-300 dark:border-zinc-800 rounded-xl shadow-sm hover:shadow-md transition p-6">
                     <div className="flex items-center justify-between gap-8 md:gap-22">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-zinc-400">Total Projects</p>
@@ -91,7 +91,7 @@ const Team = () => {
             {/* Search */}
             <div className="relative max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-zinc-400 size-3" />
-                <input placeholder="Search team members..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full text-sm rounded-md border border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 py-2 focus:outline-none focus:border-blue-500" />
+                <input placeholder="Search team members..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full text-sm rounded-md border border-gray-300 dark:border-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 py-2 focus:outline-none focus:border-primary-500" />
             </div>
 
             {/* Team Members */}

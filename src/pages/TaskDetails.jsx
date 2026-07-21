@@ -1,11 +1,12 @@
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CalendarIcon, MessageCircle, PenIcon } from "lucide-react";
-import { getTaskById, getComments, createComment } from "../services/taskService";
+import { getTaskById, createComment } from "../services/taskService";
 import { getProjectById } from "../services/projectService";
+import socket from "../services/socket";
 
 const TaskDetails = () => {
 
@@ -23,16 +24,9 @@ const TaskDetails = () => {
     const [posting, setPosting] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // comments আলাদা করে আনি (post এর পর reload এর জন্য)
-    const fetchComments = async () => {
-        if (!taskId) return;
-        try {
-            const data = await getComments(taskId);
-            setComments(data);
-        } catch {
-            /* ignore */
-        }
-    };
+    // comment list এর একদম নিচে একটা invisible anchor — এখানে scroll করলে
+    // সর্বশেষ message দেখা যায়।
+    const bottomRef = useRef(null);
 
     // task detail + project + comments — সব real API থেকে
     useEffect(() => {
@@ -58,13 +52,53 @@ const TaskDetails = () => {
         })();
     }, [taskId, projectId]);
 
+    // comments বদলালে (নতুন এলে বা নিজে পাঠালে) নিচে scroll করি,
+    // যাতে সর্বশেষ message সবসময় দেখা যায়।
+    useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [comments]);
+
+    // Real-time: এই task এর room এ join করি, নতুন comment এলে সাথে সাথে
+    // list এ যোগ করি — কারো post করলে অন্যদের reload লাগে না।
+    useEffect(() => {
+        if (!taskId) return;
+
+        // socket connect না থাকলে (edge case) join মিস না করতে connect করি
+        if (!socket.connected) socket.connect();
+        socket.emit("task:join", taskId);
+
+        const onNewComment = (comment) => {
+            if (comment?.taskId !== taskId) return;
+            setComments((prev) => {
+                // নিজের post করা comment fetchComments এ already যোগ হতে পারে —
+                // id দেখে duplicate এড়াই
+                if (prev.some((c) => c.id === comment.id)) return prev;
+                return [...prev, comment];
+            });
+        };
+
+        socket.on("comment:new", onNewComment);
+
+        return () => {
+            socket.emit("task:leave", taskId);
+            socket.off("comment:new", onNewComment);
+        };
+    }, [taskId]);
+
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
         setPosting(true);
         try {
-            await createComment(taskId, newComment.trim());
+            // createComment saved comment টা ফেরত দেয় — সেটা সাথে সাথে নিজের
+            // list এ যোগ করি। এতে socket কাজ করুক বা না করুক, নিজের comment
+            // সবসময় দেখা যায় (reload লাগে না)। অন্যরা socket broadcast দিয়ে পায়।
+            const saved = await createComment(taskId, newComment.trim());
+            if (saved) {
+                setComments((prev) =>
+                    prev.some((c) => c.id === saved.id) ? prev : [...prev, saved]
+                );
+            }
             setNewComment("");
-            await fetchComments(); // নতুন comment সহ list আবার আনি
             toast.success("Comment added");
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to add comment");
@@ -97,9 +131,11 @@ const TaskDetails = () => {
                                                 • {format(new Date(comment.createdAt), "dd MMM yyyy, HH:mm")}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-900 dark:text-zinc-200">{comment.content}</p>
+                                        <p className="text-sm text-gray-900 dark:text-zinc-200 whitespace-pre-wrap">{comment.content}</p>
                                     </div>
                                 ))}
+                                {/* scroll target — সর্বশেষ message এর ঠিক নিচে */}
+                                <div ref={bottomRef} />
                             </div>
                         ) : (
                             <p className="text-gray-600 dark:text-zinc-500 mb-4 text-sm">No comments yet. Be the first!</p>
@@ -111,11 +147,18 @@ const TaskDetails = () => {
                         <textarea
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Write a comment..."
-                            className="w-full dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md p-2 text-sm text-gray-900 dark:text-zinc-200 resize-none focus:outline-none focus:ring-1 focus:ring-blue-600"
+                            onKeyDown={(e) => {
+                                // Enter = send | Shift+Enter = নতুন লাইন
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleAddComment();
+                                }
+                            }}
+                            placeholder="Write a comment... (Enter to send, Shift+Enter for new line)"
+                            className="w-full dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md p-2 text-sm text-gray-900 dark:text-zinc-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-600"
                             rows={3}
                         />
-                        <button onClick={handleAddComment} disabled={posting} className="bg-gradient-to-l from-blue-500 to-blue-600 transition-colors text-white text-sm px-5 py-2 rounded disabled:opacity-60" >
+                        <button onClick={handleAddComment} disabled={posting} className="bg-gradient-to-l from-primary-500 to-primary-600 shadow-brand transition-colors text-white text-sm px-5 py-2 rounded disabled:opacity-60" >
                             {posting ? "Posting..." : "Post"}
                         </button>
                     </div>
@@ -132,7 +175,7 @@ const TaskDetails = () => {
                             <span className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 text-xs">
                                 {task.status}
                             </span>
-                            <span className="px-2 py-0.5 rounded bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-300 text-xs">
+                            <span className="px-2 py-0.5 rounded bg-sky-200 dark:bg-sky-900 text-sky-900 dark:text-sky-300 text-xs">
                                 {task.type}
                             </span>
                             <span className="px-2 py-0.5 rounded bg-green-200 dark:bg-emerald-900 text-green-900 dark:text-emerald-300 text-xs">

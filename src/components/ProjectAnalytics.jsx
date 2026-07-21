@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell }
 import { CheckCircle, Clock, AlertTriangle, Users, ArrowRightIcon } from "lucide-react";
 
 // Colors for charts and priorities
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
+const COLORS = ["#10b981", "#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6"];
 const PRIORITY_COLORS = {
     LOW: "text-red-600 bg-red-200 dark:text-red-500 dark:bg-red-600",
     MEDIUM: "text-blue-600 bg-blue-200 dark:text-blue-500 dark:bg-blue-600",
@@ -63,9 +63,9 @@ const ProjectAnalytics = ({ project, tasks }) => {
         {
             label: "Active Tasks",
             value: stats.inProgress,
-            color: "text-blue-600 dark:text-blue-400",
-            icon: <Clock className="size-5 text-blue-600 dark:text-blue-400" />,
-            bg: "bg-blue-200 dark:bg-blue-500/10",
+            color: "text-sky-600 dark:text-sky-400",
+            icon: <Clock className="size-5 text-sky-600 dark:text-sky-400" />,
+            bg: "bg-sky-200 dark:bg-sky-500/10",
         },
         {
             label: "Overdue Tasks",
@@ -117,7 +117,7 @@ const ProjectAnalytics = ({ project, tasks }) => {
                                 dark={{ stroke: "#27272a" }}
                             />
                             <YAxis tick={{ fill: "#52525b", fontSize: 12 }} axisLine={{ stroke: "#d4d4d8" }} />
-                            <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="value" fill="#10b981" radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

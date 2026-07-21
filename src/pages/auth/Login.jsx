@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { loginUser } from "../../features/authSlice";
+import GoogleLoginButton from "../../components/GoogleLoginButton";
 import toast from "react-hot-toast";
 import { Loader2Icon } from "lucide-react";
 
@@ -51,35 +52,49 @@ const Login = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             placeholder="you@example.com"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-700 dark:text-zinc-300 mb-1">Password</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm text-gray-700 dark:text-zinc-300">Password</label>
+                            <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-500 hover:underline">
+                                Forgot password?
+                            </Link>
+                        </div>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             placeholder="••••••"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-sm bg-white dark:bg-zinc-900 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
+                        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white text-sm font-medium py-2 rounded-md transition"
                     >
                         {loading && <Loader2Icon className="size-4 animate-spin" />}
                         {loading ? "Logging in..." : "Log in"}
                     </button>
                 </form>
 
+                {/* Separator */}
+                <div className="flex items-center gap-3 my-5">
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
+                    <span className="text-xs text-gray-400 dark:text-zinc-500">or</span>
+                    <div className="flex-1 h-px bg-gray-200 dark:bg-zinc-800" />
+                </div>
+
+                <GoogleLoginButton redirect={from} />
+
                 <p className="text-sm text-gray-500 dark:text-zinc-400 mt-5 text-center">
                     Don't have an account?{" "}
-                    <Link to="/register" className="text-blue-600 hover:underline">
+                    <Link to="/register" className="text-primary-600 hover:text-primary-500 hover:underline">
                         Register
                     </Link>
                 </p>

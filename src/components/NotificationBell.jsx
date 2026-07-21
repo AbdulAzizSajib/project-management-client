@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { BellIcon, CheckCheckIcon, Trash2Icon, Loader2Icon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import toast from "react-hot-toast";
 import {
     getNotifications,
     markAsRead,
     markAllAsRead,
     deleteNotification,
 } from "../services/notificationService";
+import socket from "../services/socket";
 
 /*
   Navbar এ bell + unread badge + dropdown।
@@ -41,13 +43,26 @@ const NotificationBell = () => {
             });
     };
 
-    // app খোলার সময় একবার আনি, তারপর প্রতি ৩০ সেকেন্ডে চুপচাপ refresh করি।
-    // এতে অন্য কেউ task assign করলে user কে page reload দিতে হয় না —
-    // কিছুক্ষণের মধ্যেই bell এ নতুন notification + badge দেখা যায়।
+    // app খোলার সময় একবার existing notification গুলো আনি।
     useEffect(() => {
         load();
-        const intervalId = setInterval(() => load(true), 30000);
-        return () => clearInterval(intervalId);
+    }, []);
+
+    // Real-time: backend থেকে notification:new এলে সাথে সাথে list এর উপরে
+    // যোগ করি + badge বাড়াই + ছোট toast দেখাই। polling আর লাগে না —
+    // reload ছাড়াই instant দেখা যায়।
+    useEffect(() => {
+        const onNewNotification = (notification) => {
+            setNotifications((prev) => {
+                if (prev.some((n) => n.id === notification.id)) return prev;
+                return [notification, ...prev];
+            });
+            setUnreadCount((c) => c + 1);
+            toast(notification.title || "New notification", { icon: "🔔" });
+        };
+
+        socket.on("notification:new", onNewNotification);
+        return () => socket.off("notification:new", onNewNotification);
     }, []);
 
     // বাইরে click করলে বন্ধ
@@ -123,7 +138,7 @@ const NotificationBell = () => {
                         {unreadCount > 0 && (
                             <button
                                 onClick={handleReadAll}
-                                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                                className="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
                             >
                                 <CheckCheckIcon className="size-3" /> Mark all read
                             </button>
@@ -133,7 +148,7 @@ const NotificationBell = () => {
                     {/* list */}
                     {loading ? (
                         <div className="flex justify-center py-8">
-                            <Loader2Icon className="size-5 text-blue-500 animate-spin" />
+                            <Loader2Icon className="size-5 text-primary-500 animate-spin" />
                         </div>
                     ) : notifications.length === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-zinc-400 text-center py-8">
@@ -145,7 +160,7 @@ const NotificationBell = () => {
                                 key={n.id}
                                 onClick={() => handleRead(n)}
                                 className={`px-4 py-3 border-b border-gray-100 dark:border-zinc-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50 ${
-                                    !n.isRead ? "bg-blue-50/50 dark:bg-blue-500/5" : ""
+                                    !n.isRead ? "bg-primary-50/50 dark:bg-primary-500/5" : ""
                                 }`}
                             >
                                 <div className="flex items-start justify-between gap-2">

@@ -1,4 +1,4 @@
-import { SearchIcon, PanelLeft, LogOutIcon } from 'lucide-react'
+import { SearchIcon, PanelLeft, LogOutIcon, KeyRoundIcon } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleTheme } from '../features/themeSlice'
 import { logoutUser } from '../features/authSlice'
@@ -13,6 +13,7 @@ const Navbar = ({ setIsSidebarOpen }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { theme } = useSelector(state => state.theme);
+    const { user } = useSelector(state => state.auth);
 
     // logout: thunk চালাই → cookie মুছে যায় → login পেজে পাঠাই
     const handleLogout = async () => {
@@ -37,7 +38,7 @@ const Navbar = ({ setIsSidebarOpen }) => {
                         <input
                             type="text"
                             placeholder="Search projects, tasks..."
-                            className="pl-8 pr-4 py-2 w-full bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
+                            className="pl-8 pr-4 py-2 w-full bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition"
                         />
                     </div>
                 </div>
@@ -57,8 +58,20 @@ const Navbar = ({ setIsSidebarOpen }) => {
                     {/* Notifications */}
                     <NotificationBell />
 
-                    {/* User Button */}
-                    <img src={assets.profile_img_a} alt="User Avatar" className="size-7 rounded-full" />
+                    {/* User Button — click korle profile page e jay.
+                        user.image thakle setai, na hole default avatar. */}
+                    <button onClick={() => navigate("/profile")} title="Profile">
+                        <img
+                            src={user?.image || assets.profile_img_a}
+                            alt="User Avatar"
+                            className="size-7 rounded-full ring-2 ring-primary-500/30 transition hover:scale-105 active:scale-95"
+                        />
+                    </button>
+
+                    {/* Change Password */}
+                    <button onClick={() => navigate("/change-password")} title="Change password" className="size-8 flex items-center justify-center bg-white dark:bg-zinc-800 shadow rounded-lg transition hover:scale-105 active:scale-95">
+                        <KeyRoundIcon className="size-4 text-gray-800 dark:text-gray-200" />
+                    </button>
 
                     {/* Logout Button */}
                     <button onClick={handleLogout} title="Log out" className="size-8 flex items-center justify-center bg-white dark:bg-zinc-800 shadow rounded-lg transition hover:scale-105 active:scale-95">

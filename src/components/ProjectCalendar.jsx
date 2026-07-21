@@ -77,12 +77,12 @@ const ProjectCalendar = ({ tasks }) => {
                                     key={day}
                                     onClick={() => setSelectedDate(day)}
                                     className={`sm:h-14 rounded-md flex flex-col items-center justify-center text-sm
-                                    ${isSelected ? "bg-blue-200 text-blue-900 dark:bg-blue-600 dark:text-white" : "bg-zinc-50 text-zinc-900 dark:bg-zinc-800/40 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"}
+                                    ${isSelected ? "bg-primary-200 text-primary-900 dark:bg-primary-600 dark:text-white" : "bg-zinc-50 text-zinc-900 dark:bg-zinc-800/40 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"}
                                     ${hasOverdue ? "border border-red-300 dark:border-red-500" : ""}`}
                                 >
                                     <span>{format(day, "d")}</span>
                                     {dayTasks.length > 0 && (
-                                        <span className="text-[10px] text-blue-700 dark:text-blue-400">{dayTasks.length} tasks</span>
+                                        <span className="text-[10px] text-primary-700 dark:text-primary-400">{dayTasks.length} tasks</span>
                                     )}
                                 </button>
                             );

@@ -121,6 +121,17 @@ const authSlice = createSlice({
     reducers: {
         clearError: (state) => {
             state.error = null;
+        },
+        // profile update howar por Redux er user ke ejate refresh kori
+        // (Navbar / onno jaygay notun name/image sathe sathe dekhabe)।
+        setUser: (state, action) => {
+            state.user = action.payload;
+        },
+        // refresh-token o fail korle interceptor eta dispatch kore —
+        // API call na kore just local user state clear kore (session already dead)।
+        forceLogout: (state) => {
+            state.user = null;
+            state.error = null;
         }
     },
     // API thunk গুলোর result এখানে handle হয়:
@@ -190,5 +201,5 @@ const authSlice = createSlice({
     }
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, forceLogout, setUser } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,8 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
 import workspaceReducer from '../features/workspaceSlice'
 import themeReducer from '../features/themeSlice'
-import authReducer from '../features/authSlice'
+import authReducer, { forceLogout } from '../features/authSlice'
 import projectReducer from '../features/projectSlice'
+import { registerAuthFailureHandler } from '../services/api'
 
 // Redux এ শুধু সেই state যা অনেক জায়গায় লাগে:
 //   auth      → logged-in user (Navbar, routes সব জায়গায়)
@@ -18,4 +19,11 @@ export const store = configureStore({
         project: projectReducer,
         theme: themeReducer,
     },
+})
+
+// api.js er refresh-token interceptor refresh o fail korle eta call kore:
+// Redux theke user muche day. Redirect ta ProtectedRoute nijei kore
+// (user null hole /login e pathay), tai ekhane shudhu state clear kori.
+registerAuthFailureHandler(() => {
+    store.dispatch(forceLogout())
 })

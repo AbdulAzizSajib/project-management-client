@@ -1,9 +1,51 @@
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useState, useMemo } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateTaskStatus, deleteTask } from "../services/taskService";
 import { Bug, CalendarIcon, GitCommit, MessageSquare, Square, Trash, XIcon, Zap } from "lucide-react";
+
+// Backend er ALLOWED_STATUS_TRANSITIONS er mirror — kon status theke kothay jaowa jay.
+const STATUS_TRANSITIONS = {
+    TODO: ["IN_PROGRESS"],
+    IN_PROGRESS: ["TODO", "IN_REVIEW"],
+    IN_REVIEW: ["IN_PROGRESS", "DONE"],
+    DONE: ["IN_PROGRESS"],
+};
+
+// Approve / reject / reopen — shudhu approver (owner / project lead / admin) korte parbe.
+const APPROVER_ONLY = new Set([
+    "IN_REVIEW->DONE",
+    "IN_REVIEW->IN_PROGRESS",
+    "DONE->IN_PROGRESS",
+]);
+
+const STATUS_LABELS = {
+    TODO: "To Do",
+    IN_PROGRESS: "In Progress",
+    IN_REVIEW: "In Review",
+    DONE: "Done",
+};
+
+// current user ei task e ki ki status e nite parbe seta hisab kore
+// (backend er permission rule er sathe consistent — nahole 403 toast ashbe).
+const allowedStatusOptions = (task, currentUserId, isApprover) => {
+    const isAssignee = task.assignee?.id
+        ? task.assignee.id === currentUserId
+        : true; // assignee na thakle je keu move korte pare (approver-only chara)
+
+    const targets = STATUS_TRANSITIONS[task.status] ?? [];
+    const reachable = targets.filter((to) => {
+        const key = `${task.status}->${to}`;
+        if (APPROVER_ONLY.has(key)) return isApprover;
+        // forward/backward normal move — assignee ba approver
+        return isAssignee || isApprover;
+    });
+
+    // current status ta beybohar korei show hobe (value), sathe reachable gulo.
+    return [task.status, ...reachable];
+};
 
 const typeIcons = {
     BUG: { icon: Bug, color: "text-red-600 dark:text-red-400" },
@@ -19,9 +61,20 @@ const priorityTexts = {
     HIGH: { background: "bg-emerald-100 dark:bg-emerald-950", prioritycolor: "text-emerald-600 dark:text-emerald-400" },
 };
 
-const ProjectTasks = ({ tasks, onTasksChange }) => {
+const ProjectTasks = ({ tasks, project, onTasksChange }) => {
     const navigate = useNavigate();
+    const { user } = useSelector((state) => state.auth);
     const [selectedTasks, setSelectedTasks] = useState([]);
+
+    // current user ei project e approver kina — owner / project lead / global admin.
+    // (workspace-level ADMIN member frontend e sorasori nei; miss hole backend 403 dhorbe.)
+    const isApprover = useMemo(() => {
+        if (!user) return false;
+        const isOwner = user.id === project?.workspace?.ownerId;
+        const isLead = user.id === project?.teamLead?.id;
+        const isGlobalAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+        return Boolean(isOwner || isLead || isGlobalAdmin);
+    }, [user, project]);
 
     const [filters, setFilters] = useState({
         status: "",
@@ -179,11 +232,10 @@ const ProjectTasks = ({ tasks, onTasksChange }) => {
                                                     </span>
                                                 </td>
                                                 <td onClick={e => e.stopPropagation()} className="px-4 py-2">
-                                                    <select name="status" onChange={(e) => handleStatusChange(task.id, e.target.value)} value={task.status} className="group-hover:ring ring-zinc-100 outline-none px-2 pr-4 py-1 rounded text-sm text-zinc-900 dark:text-zinc-200 cursor-pointer" >
-                                                        <option value="TODO">To Do</option>
-                                                        <option value="IN_PROGRESS">In Progress</option>
-                                                        <option value="IN_REVIEW">In Review</option>
-                                                        <option value="DONE">Done</option>
+                                                    <select name="status" onChange={(e) => handleStatusChange(task.id, e.target.value)} value={task.status} className="group-hover:ring ring-zinc-100 outline-none px-2 pr-4 py-1 rounded text-sm text-zinc-900 dark:text-zinc-200 cursor-pointer disabled:opacity-60" disabled={allowedStatusOptions(task, user?.id, isApprover).length <= 1} >
+                                                        {allowedStatusOptions(task, user?.id, isApprover).map((s) => (
+                                                            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                                                        ))}
                                                     </select>
                                                 </td>
                                                 <td className="px-4 py-2">
@@ -239,10 +291,10 @@ const ProjectTasks = ({ tasks, onTasksChange }) => {
 
                                         <div>
                                             <label className="text-zinc-600 dark:text-zinc-400 text-xs">Status</label>
-                                            <select name="status" onChange={(e) => handleStatusChange(task.id, e.target.value)} value={task.status} className="w-full mt-1 bg-zinc-100 dark:bg-zinc-800 ring-1 ring-zinc-300 dark:ring-zinc-700 outline-none px-2 py-1 rounded text-sm text-zinc-900 dark:text-zinc-200" >
-                                                <option value="TODO">To Do</option>
-                                                <option value="IN_PROGRESS">In Progress</option>
-                                                <option value="DONE">Done</option>
+                                            <select name="status" onChange={(e) => handleStatusChange(task.id, e.target.value)} value={task.status} className="w-full mt-1 bg-zinc-100 dark:bg-zinc-800 ring-1 ring-zinc-300 dark:ring-zinc-700 outline-none px-2 py-1 rounded text-sm text-zinc-900 dark:text-zinc-200 disabled:opacity-60" disabled={allowedStatusOptions(task, user?.id, isApprover).length <= 1} >
+                                                {allowedStatusOptions(task, user?.id, isApprover).map((s) => (
+                                                    <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                                                ))}
                                             </select>
                                         </div>
 

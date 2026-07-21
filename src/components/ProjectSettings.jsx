@@ -133,7 +133,7 @@ export default function ProjectSettings({ project }) {
                         তাই এখানে edit করার সুযোগ নেই — Project detail এর উপরে দেখাই। */}
 
                     {/* Save Button */}
-                    <button type="submit" disabled={isSubmitting} className="ml-auto flex items-center text-sm justify-center gap-2 bg-gradient-to-br from-blue-500 to-blue-600 text-white px-4 py-2 rounded" >
+                    <button type="submit" disabled={isSubmitting} className="ml-auto flex items-center text-sm justify-center gap-2 bg-gradient-to-br from-primary-500 to-primary-600 shadow-brand text-white px-4 py-2 rounded" >
                         <Save className="size-4" /> {isSubmitting ? "Saving..." : "Save Changes"}
                     </button>
                 </form>

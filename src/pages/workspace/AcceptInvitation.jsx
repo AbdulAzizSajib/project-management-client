@@ -168,7 +168,7 @@ const AcceptInvitation = () => {
             <div className="w-full max-w-sm bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-sm p-6 text-center">
                 {state === "working" && (
                     <>
-                        <Loader2Icon className="size-8 text-blue-500 animate-spin mx-auto mb-4" />
+                        <Loader2Icon className="size-8 text-primary-500 animate-spin mx-auto mb-4" />
                         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Checking your invitation…
                         </h1>
@@ -200,7 +200,7 @@ const AcceptInvitation = () => {
                         </p>
                         <button
                             onClick={handleLogoutAndSwitch}
-                            className="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-md transition"
+                            className="w-full mt-5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2 rounded-md transition"
                         >
                             Switch account
                         </button>
@@ -224,7 +224,7 @@ const AcceptInvitation = () => {
                         </p>
                         <Link
                             to="/login"
-                            className="inline-block mt-5 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            className="inline-block mt-5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
                         >
                             Go to login
                         </Link>

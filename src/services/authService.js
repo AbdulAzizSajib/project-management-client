@@ -1,0 +1,63 @@
+import api from "./api";
+
+/*
+==================================================================
+  AUTH SERVICE — auth flow er baki API gulo (Redux slice er baire)
+==================================================================
+  Login / register / verify / me / logout — egulo Redux authSlice e
+  ache (karon user state pura app e lage). Ekhane sudhu sei gulo
+  jegulo one-off: password change / forgot / reset / OTP resend.
+  Convention onujayi: cross-cutting state -> Redux, baki -> services/*
+==================================================================
+*/
+
+// Logged-in user nijer profile (name / contactNumber) update kore.
+export const updateProfile = async (payload) => {
+    const res = await api.patch("/auth/me", payload);
+    return res.data?.data;
+};
+
+// Logged-in user nijer password change kore (currentPassword lage).
+// Backend notun token cookie te boshiye dey.
+export const changePassword = async ({ currentPassword, newPassword }) => {
+    const res = await api.post("/auth/change-password", {
+        currentPassword,
+        newPassword,
+    });
+    return res.data?.data;
+};
+
+// Password bhule gele — email dile OTP pathay.
+export const forgetPassword = async (email) => {
+    const res = await api.post("/auth/forget-password", { email });
+    return res.data;
+};
+
+// OTP + notun password diye reset kore.
+export const resetPassword = async ({ email, otp, newPassword }) => {
+    const res = await api.post("/auth/reset-password", {
+        email,
+        otp,
+        newPassword,
+    });
+    return res.data;
+};
+
+// Email verify er OTP abar pathay (VerifyEmail page e "Resend" button).
+export const resendVerificationOtp = async (email) => {
+    const res = await api.post("/auth/resend-verification-otp", { email });
+    return res.data;
+};
+
+// Password reset er OTP abar pathay (Reset page e "Resend" button).
+export const resendPasswordResetOtp = async (email) => {
+    const res = await api.post("/auth/resend-password-reset-otp", { email });
+    return res.data;
+};
+
+// Google login — server-side redirect flow. XHR na, tai full-page navigation.
+// redirect param diye login shese kothay firbe seta bola jay.
+export const googleLoginUrl = (redirect = "/") => {
+    const base = import.meta.env.VITE_API_URL + "/api/v1";
+    return `${base}/auth/login/google?redirect=${encodeURIComponent(redirect)}`;
+};

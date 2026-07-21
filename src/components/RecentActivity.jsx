@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 
 const typeIcons = {
     BUG: { icon: Bug, color: "text-red-500 dark:text-red-400" },
-    FEATURE: { icon: Zap, color: "text-blue-500 dark:text-blue-400" },
+    FEATURE: { icon: Zap, color: "text-primary-500 dark:text-primary-400" },
     TASK: { icon: Square, color: "text-green-500 dark:text-green-400" },
     IMPROVEMENT: { icon: MessageSquare, color: "text-amber-500 dark:text-amber-400" },
     OTHER: { icon: GitCommit, color: "text-purple-500 dark:text-purple-400" },
@@ -31,7 +31,7 @@ const RecentActivity = () => {
     }, [projects]);
 
     return (
-        <div className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-lg transition-all overflow-hidden">
+        <div className="bg-white dark:bg-zinc-950 dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden">
             <div className="border-b border-zinc-200 dark:border-zinc-800 p-4">
                 <h2 className="text-lg text-zinc-800 dark:text-zinc-200">Recent Activity</h2>
             </div>

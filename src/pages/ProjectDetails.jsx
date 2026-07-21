@@ -51,14 +51,14 @@ export default function ProjectDetail() {
         PLANNING: "bg-zinc-200 text-zinc-900 dark:bg-zinc-600 dark:text-zinc-200",
         ACTIVE: "bg-emerald-200 text-emerald-900 dark:bg-emerald-500 dark:text-emerald-900",
         ON_HOLD: "bg-amber-200 text-amber-900 dark:bg-amber-500 dark:text-amber-900",
-        COMPLETED: "bg-blue-200 text-blue-900 dark:bg-blue-500 dark:text-blue-900",
+        COMPLETED: "bg-sky-200 text-sky-900 dark:bg-sky-500 dark:text-sky-900",
         CANCELLED: "bg-red-200 text-red-900 dark:bg-red-500 dark:text-red-900",
     };
 
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
-                <Loader2Icon className="size-7 text-blue-500 animate-spin" />
+                <Loader2Icon className="size-7 text-primary-500 animate-spin" />
             </div>
         );
     }
@@ -89,7 +89,7 @@ export default function ProjectDetail() {
                         </span>
                     </div>
                 </div>
-                <button onClick={() => setShowCreateTask(true)} className="flex items-center gap-2 px-5 py-2 text-sm rounded bg-gradient-to-br from-blue-500 to-blue-600 text-white" >
+                <button onClick={() => setShowCreateTask(true)} className="flex items-center gap-2 px-5 py-2 text-sm rounded bg-gradient-to-br from-primary-500 to-primary-600 shadow-brand text-white hover:opacity-90 transition" >
                     <PlusIcon className="size-4" />
                     New Task
                 </button>
@@ -101,9 +101,9 @@ export default function ProjectDetail() {
                     { label: "Total Tasks", value: tasks.length, color: "text-zinc-900 dark:text-white" },
                     { label: "Completed", value: tasks.filter((t) => t.status === "DONE").length, color: "text-emerald-700 dark:text-emerald-400" },
                     { label: "In Progress", value: tasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "TODO").length, color: "text-amber-700 dark:text-amber-400" },
-                    { label: "Team Members", value: project.members?.length || 0, color: "text-blue-700 dark:text-blue-400" },
+                    { label: "Team Members", value: project.members?.length || 0, color: "text-sky-700 dark:text-sky-400" },
                 ].map((card, idx) => (
-                    <div key={idx} className=" dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex justify-between sm:min-w-60 p-4 py-2.5 rounded">
+                    <div key={idx} className=" dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-200 dark:border-zinc-800 flex justify-between sm:min-w-60 p-4 py-2.5 rounded-xl shadow-sm hover:shadow-md transition">
                         <div>
                             <div className="text-sm text-zinc-600 dark:text-zinc-400">{card.label}</div>
                             <div className={`text-2xl font-bold ${card.color}`}>{card.value}</div>
@@ -132,7 +132,7 @@ export default function ProjectDetail() {
                 <div className="mt-6">
                     {activeTab === "tasks" && (
                         <div className=" dark:bg-zinc-900/40 rounded max-w-6xl">
-                            <ProjectTasks tasks={tasks} onTasksChange={reloadTasks} />
+                            <ProjectTasks tasks={tasks} project={project} onTasksChange={reloadTasks} />
                         </div>
                     )}
                     {activeTab === "analytics" && (

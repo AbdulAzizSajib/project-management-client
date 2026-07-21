@@ -9,6 +9,10 @@ import TaskDetails from "./pages/TaskDetails";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyEmail from "./pages/auth/VerifyEmail";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import ChangePassword from "./pages/auth/ChangePassword";
+import Profile from "./pages/auth/Profile";
 import CreateWorkspace from "./pages/workspace/CreateWorkspace";
 import Invitations from "./pages/workspace/Invitations";
 import AcceptInvitation from "./pages/workspace/AcceptInvitation";
@@ -24,6 +28,8 @@ const App = () => {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
                 {/* email এর link এখানে আসে। এটা PUBLIC — কারণ যাকে invite করা
                     হয়েছে তার account নাও থাকতে পারে। পেজ নিজে ঠিক করে:
@@ -39,6 +45,9 @@ const App = () => {
                         (কারণ এখান থেকেই workspace বানানো/join হয়) */}
                     <Route path="/workspace/create" element={<CreateWorkspace />} />
                     <Route path="/invitations" element={<Invitations />} />
+                    {/* profile + password — login lage, kintu workspace lage na */}
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/change-password" element={<ChangePassword />} />
 
                     {/* WorkspaceGate পাহারা দেয় (workspace আছে কিনা)।
                         না থাকলে create/invitations এ পাঠায়। */}
