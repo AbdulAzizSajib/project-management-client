@@ -64,3 +64,35 @@ export const updateComment = (commentId, content) =>
 
 export const deleteComment = (commentId) =>
     api.delete(`/comments/${commentId}`).then((r) => r.data);
+
+// ---- attachments ----
+// file = File object (input type=file theke)। multipart/form-data e pathai।
+export const uploadAttachment = (taskId, file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api
+        .post(`/tasks/${taskId}/attachments`, formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+        })
+        .then((r) => r.data?.data);
+};
+
+export const getTaskAttachments = (taskId) =>
+    api.get(`/tasks/${taskId}/attachments`).then((r) => r.data?.data || []);
+
+export const deleteAttachment = (attachmentId) =>
+    api.delete(`/attachments/${attachmentId}`).then((r) => r.data);
+
+// ---- subtasks / checklist ----
+export const getSubtasks = (taskId) =>
+    api.get(`/tasks/${taskId}/subtasks`).then((r) => r.data?.data || []);
+
+export const createSubtask = (taskId, title) =>
+    api.post(`/tasks/${taskId}/subtasks`, { title }).then((r) => r.data?.data);
+
+// payload = { title?, isCompleted? }
+export const updateSubtask = (subtaskId, payload) =>
+    api.patch(`/subtasks/${subtaskId}`, payload).then((r) => r.data?.data);
+
+export const deleteSubtask = (subtaskId) =>
+    api.delete(`/subtasks/${subtaskId}`).then((r) => r.data);

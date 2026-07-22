@@ -55,6 +55,13 @@ export const resendPasswordResetOtp = async (email) => {
     return res.data;
 };
 
+// Logged-in user nijer account deactivate (soft-delete) kore।
+// Backend session muche day + cookie clear kore — er por user logged out।
+export const deactivateAccount = async () => {
+    const res = await api.post("/auth/deactivate");
+    return res.data;
+};
+
 // Google login — server-side redirect flow. XHR na, tai full-page navigation.
 // redirect param diye login shese kothay firbe seta bola jay.
 export const googleLoginUrl = (redirect = "/") => {

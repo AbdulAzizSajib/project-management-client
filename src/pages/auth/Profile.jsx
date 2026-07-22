@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
-import { updateProfile } from "../../services/authService";
-import { setUser } from "../../features/authSlice";
+import { updateProfile, deactivateAccount } from "../../services/authService";
+import { setUser, forceLogout } from "../../features/authSlice";
 import toast from "react-hot-toast";
-import { Loader2Icon, ArrowLeftIcon, KeyRoundIcon } from "lucide-react";
+import { Loader2Icon, ArrowLeftIcon, KeyRoundIcon, AlertTriangleIcon } from "lucide-react";
 
 // Logged-in user nijer profile (name + contact number) dekhe o update kore।
 const Profile = () => {
@@ -15,6 +15,7 @@ const Profile = () => {
     const [name, setName] = useState(user?.name || "");
     const [contactNumber, setContactNumber] = useState(user?.contactNumber || "");
     const [loading, setLoading] = useState(false);
+    const [deactivating, setDeactivating] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,6 +32,27 @@ const Profile = () => {
             toast.error(error?.response?.data?.message || "Failed to update profile");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Account deactivate — double confirm, tarpor backend session muche day।
+    // sekhane Redux clear kore login e pathai।
+    const handleDeactivate = async () => {
+        const confirmed = window.confirm(
+            "Deactivate your account? You will be logged out and lose access. This can only be undone by an administrator."
+        );
+        if (!confirmed) return;
+
+        setDeactivating(true);
+        try {
+            await deactivateAccount();
+            dispatch(forceLogout());
+            toast.success("Account deactivated");
+            navigate("/login", { replace: true });
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to deactivate account");
+        } finally {
+            setDeactivating(false);
         }
     };
 
@@ -104,6 +126,25 @@ const Profile = () => {
                 >
                     <KeyRoundIcon className="size-4" /> Change password
                 </Link>
+
+                {/* Danger zone — account deactivate */}
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-zinc-800">
+                    <h2 className="text-sm font-semibold text-red-600 dark:text-red-400 flex items-center gap-2 mb-2">
+                        <AlertTriangleIcon className="size-4" /> Danger zone
+                    </h2>
+                    <p className="text-xs text-gray-500 dark:text-zinc-400 mb-3">
+                        Deactivating your account logs you out everywhere and removes your access.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleDeactivate}
+                        disabled={deactivating}
+                        className="w-full flex items-center justify-center gap-2 border border-red-300 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 text-sm font-medium py-2 rounded-md transition"
+                    >
+                        {deactivating && <Loader2Icon className="size-4 animate-spin" />}
+                        {deactivating ? "Deactivating..." : "Deactivate account"}
+                    </button>
+                </div>
             </div>
         </div>
     );

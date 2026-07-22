@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CalendarIcon, MessageCircle, PenIcon } from "lucide-react";
 import { getTaskById, createComment } from "../services/taskService";
-import { getProjectById } from "../services/projectService";
+import { getProjectById, getProjectMembers } from "../services/projectService";
+import TaskAttachments from "../components/TaskAttachments";
+import TaskSubtasks from "../components/TaskSubtasks";
+import { renderCommentContent, detectMentionQuery } from "../utils/mentions";
 import socket from "../services/socket";
 
 const TaskDetails = () => {
@@ -24,6 +27,11 @@ const TaskDetails = () => {
     const [posting, setPosting] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    // @mention: project member list + dropdown state
+    const [members, setMembers] = useState([]);
+    const [mention, setMention] = useState(null); // { query, start } ba null
+    const commentRef = useRef(null);
+
     // comment list এর একদম নিচে একটা invisible anchor — এখানে scroll করলে
     // সর্বশেষ message দেখা যায়।
     const bottomRef = useRef(null);
@@ -40,8 +48,12 @@ const TaskDetails = () => {
                 setTask(tsk);
                 setComments(tsk.comments || []);
                 if (projectId) {
-                    const proj = await getProjectById(projectId);
+                    const [proj, mem] = await Promise.all([
+                        getProjectById(projectId),
+                        getProjectMembers(projectId).catch(() => []),
+                    ]);
                     setProject(proj);
+                    setMembers(mem);
                 }
             } catch (err) {
                 toast.error(err.response?.data?.message || "Failed to load task");
@@ -84,6 +96,39 @@ const TaskDetails = () => {
             socket.off("comment:new", onNewComment);
         };
     }, [taskId]);
+
+    // textarea e type korle — @mention query detect kori
+    const handleCommentChange = (e) => {
+        const value = e.target.value;
+        setNewComment(value);
+        const caret = e.target.selectionStart;
+        setMention(detectMentionQuery(value, caret));
+    };
+
+    // dropdown theke member select korle "@word" ke "@[Name](id) " diye replace kori
+    const handleSelectMention = (member) => {
+        if (!mention) return;
+        const before = newComment.slice(0, mention.start);
+        const after = newComment.slice(
+            mention.start + 1 + mention.query.length // "@" + query
+        );
+        const inserted = `@[${member.user.name}](${member.user.id}) `;
+        setNewComment(before + inserted + after);
+        setMention(null);
+        commentRef.current?.focus();
+    };
+
+    // dropdown e dekhanor jonno member filter (query onujayi, khali hole shob)
+    const mentionCandidates =
+        mention === null
+            ? []
+            : members
+                  .filter((m) =>
+                      m.user?.name
+                          ?.toLowerCase()
+                          .includes(mention.query.toLowerCase())
+                  )
+                  .slice(0, 6);
 
     const handleAddComment = async () => {
         if (!newComment.trim()) return;
@@ -131,7 +176,7 @@ const TaskDetails = () => {
                                                 • {format(new Date(comment.createdAt), "dd MMM yyyy, HH:mm")}
                                             </span>
                                         </div>
-                                        <p className="text-sm text-gray-900 dark:text-zinc-200 whitespace-pre-wrap">{comment.content}</p>
+                                        <p className="text-sm text-gray-900 dark:text-zinc-200 whitespace-pre-wrap">{renderCommentContent(comment.content)}</p>
                                     </div>
                                 ))}
                                 {/* scroll target — সর্বশেষ message এর ঠিক নিচে */}
@@ -144,20 +189,40 @@ const TaskDetails = () => {
 
                     {/* Add Comment */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-                        <textarea
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            onKeyDown={(e) => {
-                                // Enter = send | Shift+Enter = নতুন লাইন
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleAddComment();
-                                }
-                            }}
-                            placeholder="Write a comment... (Enter to send, Shift+Enter for new line)"
-                            className="w-full dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md p-2 text-sm text-gray-900 dark:text-zinc-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-600"
-                            rows={3}
-                        />
+                        <div className="relative w-full">
+                            {/* @mention dropdown — query thakle candidate member dekhai */}
+                            {mention !== null && mentionCandidates.length > 0 && (
+                                <div className="absolute bottom-full mb-1 left-0 z-50 w-64 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md shadow-lg overflow-hidden">
+                                    {mentionCandidates.map((m) => (
+                                        <button
+                                            key={m.user.id}
+                                            type="button"
+                                            onClick={() => handleSelectMention(m)}
+                                            className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800"
+                                        >
+                                            <img src={m.user.image} alt="" className="size-5 rounded-full" />
+                                            <span className="truncate">{m.user.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <textarea
+                                ref={commentRef}
+                                value={newComment}
+                                onChange={handleCommentChange}
+                                onKeyDown={(e) => {
+                                    // mention dropdown khola thakle Enter = kichu na (select korte dei)
+                                    if (e.key === "Enter" && !e.shiftKey && mention === null) {
+                                        e.preventDefault();
+                                        handleAddComment();
+                                    }
+                                    if (e.key === "Escape") setMention(null);
+                                }}
+                                placeholder="Write a comment... use @ to mention (Enter to send)"
+                                className="w-full dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-md p-2 text-sm text-gray-900 dark:text-zinc-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-600"
+                                rows={3}
+                            />
+                        </div>
                         <button onClick={handleAddComment} disabled={posting} className="bg-gradient-to-l from-primary-500 to-primary-600 shadow-brand transition-colors text-white text-sm px-5 py-2 rounded disabled:opacity-60" >
                             {posting ? "Posting..." : "Post"}
                         </button>
@@ -201,6 +266,12 @@ const TaskDetails = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Checklist / Subtasks */}
+                <TaskSubtasks taskId={taskId} />
+
+                {/* Attachments */}
+                <TaskAttachments taskId={taskId} />
 
                 {/* Project Info */}
                 {project && (
