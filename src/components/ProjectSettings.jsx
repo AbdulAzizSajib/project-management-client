@@ -1,14 +1,18 @@
-import { Plus, Save } from "lucide-react";
+import { Plus, Save, Trash2, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AddProjectMember from "./AddProjectMember";
-import { updateProject } from "../services/projectService";
+import { updateProject, deleteProject } from "../services/projectService";
 import { getProjectMembers } from "../services/projectService";
 
 // date কে yyyy-MM-dd তে (input[type=date] এর জন্য)
 const toDateInput = (d) => (d ? new Date(d).toISOString().split("T")[0] : "");
 
 export default function ProjectSettings({ project }) {
+
+    const navigate = useNavigate();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const [formData, setFormData] = useState({
         name: "",
@@ -67,6 +71,25 @@ export default function ProjectSettings({ project }) {
             toast.error(err.response?.data?.message || "Failed to update project");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // Project delete — double confirm, tarpor projects list e ferot।
+    // (backend cascade: project muchle er task/member/attachment shob muche jabe)
+    const handleDelete = async () => {
+        const confirmed = window.confirm(
+            `Delete project "${project.name}"? This permanently removes the project and all its tasks. This cannot be undone.`
+        );
+        if (!confirmed) return;
+
+        setIsDeleting(true);
+        try {
+            await deleteProject(project.id);
+            toast.success("Project deleted");
+            navigate("/projects");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to delete project");
+            setIsDeleting(false);
         }
     };
 
@@ -163,6 +186,24 @@ export default function ProjectSettings({ project }) {
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* Danger zone — project delete */}
+                <div className="rounded-lg border border-red-300 dark:border-red-900/60 p-6 bg-red-50/50 dark:bg-red-950/20">
+                    <h2 className="text-lg font-medium text-red-700 dark:text-red-400 mb-1 flex items-center gap-2">
+                        <AlertTriangle className="size-5" /> Danger zone
+                    </h2>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                        Deleting a project permanently removes it along with all its tasks, comments, and attachments.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white px-4 py-2 rounded transition"
+                    >
+                        <Trash2 className="size-4" /> {isDeleting ? "Deleting..." : "Delete project"}
+                    </button>
                 </div>
             </div>
         </div>

@@ -2,9 +2,9 @@ import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { CalendarIcon, MessageCircle, PenIcon } from "lucide-react";
-import { getTaskById, createComment } from "../services/taskService";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { CalendarIcon, MessageCircle, PenIcon, Trash2Icon } from "lucide-react";
+import { getTaskById, createComment, deleteTask } from "../services/taskService";
 import { getProjectById, getProjectMembers } from "../services/projectService";
 import TaskAttachments from "../components/TaskAttachments";
 import TaskSubtasks from "../components/TaskSubtasks";
@@ -14,6 +14,7 @@ import socket from "../services/socket";
 const TaskDetails = () => {
 
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const projectId = searchParams.get("projectId");
     const taskId = searchParams.get("taskId");
 
@@ -26,10 +27,14 @@ const TaskDetails = () => {
     const [newComment, setNewComment] = useState("");
     const [posting, setPosting] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [deleting, setDeleting] = useState(false);
 
     // @mention: project member list + dropdown state
     const [members, setMembers] = useState([]);
     const [mention, setMention] = useState(null); // { query, start } ba null
+    // input e "@sajib" (display) dekhai, kintu ei list e {name,id} track kori।
+    // send korar shomoy display "@name" ke backend format "@[name](id)" e convert kori।
+    const [mentioned, setMentioned] = useState([]);
     const commentRef = useRef(null);
 
     // comment list এর একদম নিচে একটা invisible anchor — এখানে scroll করলে
@@ -105,17 +110,39 @@ const TaskDetails = () => {
         setMention(detectMentionQuery(value, caret));
     };
 
-    // dropdown theke member select korle "@word" ke "@[Name](id) " diye replace kori
+    // dropdown theke member select korle input e "@Name " (display) boshai,
+    // ar {name,id} track list e rakhi (send er shomoy raw format e convert hobe)।
     const handleSelectMention = (member) => {
         if (!mention) return;
         const before = newComment.slice(0, mention.start);
         const after = newComment.slice(
-            mention.start + 1 + mention.query.length // "@" + query
+            mention.start + 1 + mention.query.length // "@" (1) + query length
         );
-        const inserted = `@[${member.user.name}](${member.user.id}) `;
-        setNewComment(before + inserted + after);
+        const needsSpace = before.length > 0 && !/\s$/.test(before);
+        const displayInsert = `@${member.user.name} `;
+        setNewComment(before + (needsSpace ? " " : "") + displayInsert + after);
+
+        // track: ei name -> id (duplicate name atkate id diye dedupe)
+        setMentioned((prev) => {
+            if (prev.some((m) => m.id === member.user.id)) return prev;
+            return [...prev, { name: member.user.name, id: member.user.id }];
+        });
+
         setMention(null);
         commentRef.current?.focus();
+    };
+
+    // send er age display text ("@Name") ke backend format ("@[Name](id)") e convert kori।
+    // shudhu tader-i convert kori jara mentioned list e ache (typo/random @word noy)।
+    const toBackendContent = (displayText) => {
+        let result = displayText;
+        for (const m of mentioned) {
+            // "@Name" (word-boundary) ke "@[Name](id)" diye replace — shob occurrence
+            const escaped = m.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const regex = new RegExp(`@${escaped}\\b`, "g");
+            result = result.replace(regex, `@[${m.name}](${m.id})`);
+        }
+        return result;
     };
 
     // dropdown e dekhanor jonno member filter (query onujayi, khali hole shob)
@@ -134,21 +161,43 @@ const TaskDetails = () => {
         if (!newComment.trim()) return;
         setPosting(true);
         try {
+            // display text ("@Name") ke backend format ("@[Name](id)") e convert kore pathai।
+            const content = toBackendContent(newComment.trim());
+
             // createComment saved comment টা ফেরত দেয় — সেটা সাথে সাথে নিজের
             // list এ যোগ করি। এতে socket কাজ করুক বা না করুক, নিজের comment
             // সবসময় দেখা যায় (reload লাগে না)। অন্যরা socket broadcast দিয়ে পায়।
-            const saved = await createComment(taskId, newComment.trim());
+            const saved = await createComment(taskId, content);
             if (saved) {
                 setComments((prev) =>
                     prev.some((c) => c.id === saved.id) ? prev : [...prev, saved]
                 );
             }
             setNewComment("");
+            setMentioned([]); // send holo — track list reset
             toast.success("Comment added");
         } catch (error) {
             toast.error(error?.response?.data?.message || "Failed to add comment");
         } finally {
             setPosting(false);
+        }
+    };
+
+    // Task delete — confirm, tarpor project details page e ferot।
+    const handleDeleteTask = async () => {
+        const confirmed = window.confirm(
+            `Delete task "${task.title}"? This cannot be undone.`
+        );
+        if (!confirmed) return;
+
+        setDeleting(true);
+        try {
+            await deleteTask(taskId);
+            toast.success("Task deleted");
+            navigate(`/projectsDetail?id=${projectId}`);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to delete task");
+            setDeleting(false);
         }
     };
 
@@ -235,7 +284,18 @@ const TaskDetails = () => {
                 {/* Task Info */}
                 <div className="p-5 rounded-md bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 ">
                     <div className="mb-3">
-                        <h1 className="text-lg font-medium text-gray-900 dark:text-zinc-100">{task.title}</h1>
+                        <div className="flex items-start justify-between gap-2">
+                            <h1 className="text-lg font-medium text-gray-900 dark:text-zinc-100">{task.title}</h1>
+                            {/* Task delete — confirm kore project e ferot pathay */}
+                            <button
+                                onClick={handleDeleteTask}
+                                disabled={deleting}
+                                title="Delete task"
+                                className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 transition"
+                            >
+                                <Trash2Icon className="size-4" />
+                            </button>
+                        </div>
                         <div className="flex flex-wrap gap-2 mt-2">
                             <span className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 text-xs">
                                 {task.status}

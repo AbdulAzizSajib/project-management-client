@@ -6,7 +6,9 @@ import React from "react";
   - detect: input e "@word" khoje (dropdown trigger e lage)
 */
 
-const MENTION_REGEX = /@\[([^\]]+)\]\(([^)]+)\)/g;
+// "@" prefix optional rakha holo — kichu purono comment "@" chara
+// "[name](id)" format e save hoyeche (insert bug), sei gulo o render hobe।
+const MENTION_REGEX = /@?\[([^\]]+)\]\(([^)]+)\)/g;
 
 // comment text ke render korar jonno — mention gulo sundor kore dekhai
 export const renderCommentContent = (content) => {

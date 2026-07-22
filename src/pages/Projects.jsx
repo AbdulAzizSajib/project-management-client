@@ -45,7 +45,7 @@ export default function Projects() {
     }, [projects, searchTerm, filters]);
 
     return (
-        <div className="space-y-6 max-w-6xl mx-auto">
+        <div className="space-y-6 ">
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
