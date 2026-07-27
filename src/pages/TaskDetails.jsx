@@ -1,13 +1,14 @@
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CalendarIcon, MessageCircle, PenIcon, Trash2Icon } from "lucide-react";
 import { getTaskById, createComment, deleteTask } from "../services/taskService";
 import { getProjectById, getProjectMembers } from "../services/projectService";
 import TaskAttachments from "../components/TaskAttachments";
 import TaskSubtasks from "../components/TaskSubtasks";
+import Avatar from "../components/Avatar";
 import { renderCommentContent, detectMentionQuery } from "../utils/mentions";
 import socket from "../services/socket";
 
@@ -28,6 +29,22 @@ const TaskDetails = () => {
     const [posting, setPosting] = useState(false);
     const [loading, setLoading] = useState(true);
     const [deleting, setDeleting] = useState(false);
+
+    // Task edit/delete — shudhu creator, assignee, project lead, workspace
+    // owner, ba global admin dekhbe (backend er assertCanModifyTask er sathe
+    // consistent). Workspace-level ADMIN member frontend e sorasori check
+    // kora jay na — miss hole backend 403 dhorbe (ProjectTasks.jsx er motoi
+    // known limitation)।
+    const canModifyTask = useMemo(() => {
+        if (!task || !currentUser) return false;
+        const isCreator = task.creatorId === currentUser.id;
+        const isAssignee = task.assigneeId === currentUser.id;
+        const isOwner = currentUser.id === project?.workspace?.ownerId;
+        const isLead = currentUser.id === project?.teamLead?.id;
+        const isGlobalAdmin =
+            currentUser.role === "ADMIN" || currentUser.role === "SUPER_ADMIN";
+        return Boolean(isCreator || isAssignee || isOwner || isLead || isGlobalAdmin);
+    }, [task, project, currentUser]);
 
     // @mention: project member list + dropdown state
     const [members, setMembers] = useState([]);
@@ -219,7 +236,7 @@ const TaskDetails = () => {
                                 {comments.map((comment) => (
                                     <div key={comment.id} className={`sm:max-w-4/5 dark:bg-gradient-to-br dark:from-zinc-800 dark:to-zinc-900 border border-gray-300 dark:border-zinc-700 p-3 rounded-md ${comment.user?.id === currentUser?.id ? "ml-auto" : "mr-auto"}`} >
                                         <div className="flex items-center gap-2 mb-1 text-sm text-gray-500 dark:text-zinc-400">
-                                            <img src={comment.user.image} alt="avatar" className="size-5 rounded-full" />
+                                            <Avatar src={comment.user.image} name={comment.user.name} className="size-5 rounded-full" textSize="text-[10px]" />
                                             <span className="font-medium text-gray-900 dark:text-white">{comment.user.name}</span>
                                             <span className="text-xs text-gray-400 dark:text-zinc-600">
                                                 • {format(new Date(comment.createdAt), "dd MMM yyyy, HH:mm")}
@@ -249,7 +266,7 @@ const TaskDetails = () => {
                                             onClick={() => handleSelectMention(m)}
                                             className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800"
                                         >
-                                            <img src={m.user.image} alt="" className="size-5 rounded-full" />
+                                            <Avatar src={m.user.image} name={m.user.name} className="size-5 rounded-full" textSize="text-[10px]" />
                                             <span className="truncate">{m.user.name}</span>
                                         </button>
                                     ))}
@@ -287,14 +304,16 @@ const TaskDetails = () => {
                         <div className="flex items-start justify-between gap-2">
                             <h1 className="text-lg font-medium text-gray-900 dark:text-zinc-100">{task.title}</h1>
                             {/* Task delete — confirm kore project e ferot pathay */}
-                            <button
-                                onClick={handleDeleteTask}
-                                disabled={deleting}
-                                title="Delete task"
-                                className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 transition"
-                            >
-                                <Trash2Icon className="size-4" />
-                            </button>
+                            {canModifyTask && (
+                                <button
+                                    onClick={handleDeleteTask}
+                                    disabled={deleting}
+                                    title="Delete task"
+                                    className="shrink-0 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 transition"
+                                >
+                                    <Trash2Icon className="size-4" />
+                                </button>
+                            )}
                         </div>
                         <div className="flex flex-wrap gap-2 mt-2">
                             <span className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-300 text-xs">
@@ -317,7 +336,7 @@ const TaskDetails = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-zinc-300">
                         <div className="flex items-center gap-2">
-                            <img src={task.assignee?.image} className="size-5 rounded-full" alt="avatar" />
+                            <Avatar src={task.assignee?.image} name={task.assignee?.name} className="size-5 rounded-full" textSize="text-[10px]" />
                             {task.assignee?.name || "Unassigned"}
                         </div>
                         <div className="flex items-center gap-2">
@@ -328,7 +347,7 @@ const TaskDetails = () => {
                 </div>
 
                 {/* Checklist / Subtasks */}
-                <TaskSubtasks taskId={taskId} />
+                <TaskSubtasks taskId={taskId} canModify={canModifyTask} />
 
                 {/* Attachments */}
                 <TaskAttachments taskId={taskId} />

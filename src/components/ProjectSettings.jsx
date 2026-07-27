@@ -1,10 +1,10 @@
-import { Plus, Save, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Save, Trash2, AlertTriangle, UserMinus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import AddProjectMember from "./AddProjectMember";
 import { updateProject, deleteProject } from "../services/projectService";
-import { getProjectMembers } from "../services/projectService";
+import { getProjectMembers, removeProjectMember } from "../services/projectService";
 
 // date কে yyyy-MM-dd তে (input[type=date] এর জন্য)
 const toDateInput = (d) => (d ? new Date(d).toISOString().split("T")[0] : "");
@@ -26,6 +26,7 @@ export default function ProjectSettings({ project }) {
     const [members, setMembers] = useState([]);   // project members (real API)
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [removingId, setRemovingId] = useState(null); // je member remove hocche tar userId
 
     // project এর মান form এ বসাই (backend camelCase → form)
     useEffect(() => {
@@ -71,6 +72,26 @@ export default function ProjectSettings({ project }) {
             toast.error(err.response?.data?.message || "Failed to update project");
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // Project theke member remove — team lead ke backend e remove korte dey na
+    // (age team lead change korte hoy), tai button-i disable rakha hoy।
+    const handleRemoveMember = async (member) => {
+        const confirmed = window.confirm(
+            `Remove ${member?.user?.name || member?.user?.email || "this member"} from the project?`
+        );
+        if (!confirmed) return;
+
+        setRemovingId(member.userId);
+        try {
+            await removeProjectMember(project.id, member.userId);
+            setMembers((prev) => prev.filter((m) => m.userId !== member.userId));
+            toast.success("Member removed from project");
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Failed to remove member");
+        } finally {
+            setRemovingId(null);
         }
     };
 
@@ -178,12 +199,26 @@ export default function ProjectSettings({ project }) {
                     {/* Member List */}
                     {members.length > 0 && (
                         <div className="space-y-2 mt-2 max-h-32 overflow-y-auto">
-                            {members.map((member) => (
-                                <div key={member.id} className="flex items-center justify-between px-3 py-2 rounded dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-300" >
-                                    <span> {member?.user?.name || member?.user?.email || "Unknown"} </span>
-                                    {project.teamLeadId === member.userId && <span className="px-2 py-0.5 rounded-xs ring ring-zinc-200 dark:ring-zinc-600">Team Lead</span>}
-                                </div>
-                            ))}
+                            {members.map((member) => {
+                                const isTeamLead = project.teamLeadId === member.userId;
+                                return (
+                                    <div key={member.id} className="flex items-center justify-between px-3 py-2 rounded dark:bg-zinc-800 text-sm text-zinc-900 dark:text-zinc-300" >
+                                        <span> {member?.user?.name || member?.user?.email || "Unknown"} </span>
+                                        <div className="flex items-center gap-2">
+                                            {isTeamLead && <span className="px-2 py-0.5 rounded-xs ring ring-zinc-200 dark:ring-zinc-600">Team Lead</span>}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveMember(member)}
+                                                disabled={isTeamLead || removingId === member.userId}
+                                                title={isTeamLead ? "Change the team lead first to remove this member" : "Remove from project"}
+                                                className="p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-400 transition"
+                                            >
+                                                <UserMinus className="size-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

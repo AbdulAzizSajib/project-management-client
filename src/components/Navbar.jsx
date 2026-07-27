@@ -4,10 +4,10 @@ import { toggleTheme } from '../features/themeSlice'
 import { logoutUser } from '../features/authSlice'
 import { MoonIcon, SunIcon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { assets } from '../assets/assets'
 import toast from 'react-hot-toast'
 import NotificationBell from './NotificationBell'
 import GlobalSearch from './GlobalSearch'
+import Avatar from './Avatar'
 
 const Navbar = ({ setIsSidebarOpen }) => {
 
@@ -53,11 +53,11 @@ const Navbar = ({ setIsSidebarOpen }) => {
                     <NotificationBell />
 
                     {/* User Button — click korle profile page e jay.
-                        user.image thakle setai, na hole default avatar. */}
+                        user.image thakle setai, na hole name er first letter diye avatar. */}
                     <button onClick={() => navigate("/profile")} title="Profile">
-                        <img
-                            src={user?.image || assets.profile_img_a}
-                            alt="User Avatar"
+                        <Avatar
+                            src={user?.image}
+                            name={user?.name}
                             className="size-7 rounded-full ring-2 ring-primary-500/30 transition hover:scale-105 active:scale-95"
                         />
                     </button>

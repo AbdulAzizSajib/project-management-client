@@ -11,8 +11,12 @@ import {
 /*
   Task er subtask / checklist section — TaskDetails page e boshe।
   Self-contained: fetch + add + toggle complete + delete + progress bar।
+
+  canModify: parent (TaskDetails) theke pass hoy — backend e toggle/delete
+  shudhu task creator/assignee/lead/owner/admin korte pare, tai UI o shei
+  onujayi gate kora holo (nahole click korle 403 toast ashbe)।
 */
-const TaskSubtasks = ({ taskId }) => {
+const TaskSubtasks = ({ taskId, canModify = true }) => {
     const [subtasks, setSubtasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newTitle, setNewTitle] = useState("");
@@ -104,7 +108,9 @@ const TaskSubtasks = ({ taskId }) => {
                                 type="checkbox"
                                 checked={sub.isCompleted}
                                 onChange={() => handleToggle(sub)}
-                                className="size-4 accent-primary-600 cursor-pointer shrink-0"
+                                disabled={!canModify}
+                                title={!canModify ? "You don't have permission to update this checklist item" : undefined}
+                                className="size-4 accent-primary-600 cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             <span
                                 className={`flex-1 text-sm ${
@@ -115,13 +121,15 @@ const TaskSubtasks = ({ taskId }) => {
                             >
                                 {sub.title}
                             </span>
-                            <button
-                                onClick={() => handleDelete(sub.id)}
-                                title="Delete"
-                                className="text-gray-300 dark:text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition shrink-0"
-                            >
-                                <Trash2Icon className="size-4" />
-                            </button>
+                            {canModify && (
+                                <button
+                                    onClick={() => handleDelete(sub.id)}
+                                    title="Delete"
+                                    className="text-gray-300 dark:text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition shrink-0"
+                                >
+                                    <Trash2Icon className="size-4" />
+                                </button>
+                            )}
                         </div>
                     ))}
                     {total === 0 && (

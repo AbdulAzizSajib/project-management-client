@@ -11,9 +11,13 @@ import api from "./api";
 ==================================================================
 */
 
-// Logged-in user nijer profile (name / contactNumber) update kore.
+// Logged-in user nijer profile (name / contactNumber / image) update kore.
+// payload FormData hole (image thakle) multipart hishebe pathai, na hole plain JSON।
 export const updateProfile = async (payload) => {
-    const res = await api.patch("/auth/me", payload);
+    const isFormData = payload instanceof FormData;
+    const res = await api.patch("/auth/me", payload, {
+        headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+    });
     return res.data?.data;
 };
 

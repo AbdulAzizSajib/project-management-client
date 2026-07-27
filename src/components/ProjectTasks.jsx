@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateTaskStatus, deleteTask } from "../services/taskService";
 import { Bug, CalendarIcon, GitCommit, MessageSquare, Square, Trash, XIcon, Zap } from "lucide-react";
+import Avatar from "./Avatar";
 
 // Backend er ALLOWED_STATUS_TRANSITIONS er mirror — kon status theke kothay jaowa jay.
 const STATUS_TRANSITIONS = {
@@ -75,6 +76,17 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
         const isGlobalAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
         return Boolean(isOwner || isLead || isGlobalAdmin);
     }, [user, project]);
+
+    // Task delete — backend e shudhu creator/assignee/approver korte pare
+    // (assertCanModifyTask). UI o shei onujayi gate kora holo, nahole
+    // select kore delete korte gele 403 toast ashbe.
+    const canModifyTask = (task) => {
+        if (!user) return false;
+        if (isApprover) return true;
+        if (task.creatorId === user.id) return true;
+        if (task.assigneeId === user.id) return true;
+        return false;
+    };
 
     const [filters, setFilters] = useState({
         status: "",
@@ -198,7 +210,7 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
                             <thead className="text-xs uppercase dark:bg-zinc-800/70 text-zinc-500 dark:text-zinc-400 ">
                                 <tr>
                                     <th className="pl-2 pr-1">
-                                        <input onChange={() => selectedTasks.length > 1 ? setSelectedTasks([]) : setSelectedTasks(tasks.map((t) => t.id))} checked={selectedTasks.length === tasks.length} type="checkbox" className="size-3 accent-zinc-600 dark:accent-zinc-500" />
+                                        <input onChange={() => selectedTasks.length > 1 ? setSelectedTasks([]) : setSelectedTasks(tasks.filter(canModifyTask).map((t) => t.id))} checked={selectedTasks.length > 0 && selectedTasks.length === tasks.filter(canModifyTask).length} type="checkbox" className="size-3 accent-zinc-600 dark:accent-zinc-500" />
                                     </th>
                                     <th className="px-4 pl-0 py-3">Title</th>
                                     <th className="px-4 py-3">Type</th>
@@ -217,7 +229,14 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
                                         return (
                                             <tr key={task.id} onClick={() => navigate(`/taskDetails?projectId=${task.projectId}&taskId=${task.id}`)} className=" border-t border-zinc-300 dark:border-zinc-800 group hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all cursor-pointer" >
                                                 <td onClick={e => e.stopPropagation()} className="pl-2 pr-1">
-                                                    <input type="checkbox" className="size-3 accent-zinc-600 dark:accent-zinc-500" onChange={() => selectedTasks.includes(task.id) ? setSelectedTasks(selectedTasks.filter((i) => i !== task.id)) : setSelectedTasks((prev) => [...prev, task.id])} checked={selectedTasks.includes(task.id)} />
+                                                    <input
+                                                        type="checkbox"
+                                                        disabled={!canModifyTask(task)}
+                                                        title={!canModifyTask(task) ? "You don't have permission to delete this task" : undefined}
+                                                        className="size-3 accent-zinc-600 dark:accent-zinc-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                        onChange={() => selectedTasks.includes(task.id) ? setSelectedTasks(selectedTasks.filter((i) => i !== task.id)) : setSelectedTasks((prev) => [...prev, task.id])}
+                                                        checked={selectedTasks.includes(task.id)}
+                                                    />
                                                 </td>
                                                 <td className="px-4 pl-0 py-2">{task.title}</td>
                                                 <td className="px-4 py-2">
@@ -240,7 +259,7 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
                                                 </td>
                                                 <td className="px-4 py-2">
                                                     <div className="flex items-center gap-2">
-                                                        <img src={task.assignee?.image} className="size-5 rounded-full" alt="avatar" />
+                                                        <Avatar src={task.assignee?.image} name={task.assignee?.name} className="size-5 rounded-full" textSize="text-[10px]" />
                                                         {task.assignee?.name || "-"}
                                                     </div>
                                                 </td>
@@ -275,7 +294,14 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
                                     <div key={task.id} className=" dark:bg-gradient-to-br dark:from-zinc-800/70 dark:to-zinc-900/50 border border-zinc-300 dark:border-zinc-800 rounded-lg p-4 flex flex-col gap-2">
                                         <div className="flex items-center justify-between">
                                             <h3 className="text-zinc-900 dark:text-zinc-200 text-sm font-semibold">{task.title}</h3>
-                                            <input type="checkbox" className="size-4 accent-zinc-600 dark:accent-zinc-500" onChange={() => selectedTasks.includes(task.id) ? setSelectedTasks(selectedTasks.filter((i) => i !== task.id)) : setSelectedTasks((prev) => [...prev, task.id])} checked={selectedTasks.includes(task.id)} />
+                                            <input
+                                                type="checkbox"
+                                                disabled={!canModifyTask(task)}
+                                                title={!canModifyTask(task) ? "You don't have permission to delete this task" : undefined}
+                                                className="size-4 accent-zinc-600 dark:accent-zinc-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                onChange={() => selectedTasks.includes(task.id) ? setSelectedTasks(selectedTasks.filter((i) => i !== task.id)) : setSelectedTasks((prev) => [...prev, task.id])}
+                                                checked={selectedTasks.includes(task.id)}
+                                            />
                                         </div>
 
                                         <div className="text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
@@ -299,7 +325,7 @@ const ProjectTasks = ({ tasks, project, onTasksChange }) => {
                                         </div>
 
                                         <div className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                                            <img src={task.assignee?.image} className="size-5 rounded-full" alt="avatar" />
+                                            <Avatar src={task.assignee?.image} name={task.assignee?.name} className="size-5 rounded-full" textSize="text-[10px]" />
                                             {task.assignee?.name || "-"}
                                         </div>
 

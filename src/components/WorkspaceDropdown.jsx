@@ -3,7 +3,7 @@ import { ChevronDown, Check, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentWorkspace } from "../features/workspaceSlice";
 import { useNavigate } from "react-router-dom";
-import { assets } from "../assets/assets";
+import Avatar from "./Avatar";
 
 function WorkspaceDropdown() {
 
@@ -41,7 +41,7 @@ function WorkspaceDropdown() {
         <div className="relative m-[13px]" ref={dropdownRef}>
             <button onClick={() => setIsOpen(prev => !prev)} className="w-full flex items-center justify-between px-4 h-auto text-left rounded hover:bg-gray-100 dark:hover:bg-zinc-800" >
                 <div className="flex items-center gap-3">
-                    <img src={currentWorkspace?.image || assets.workspace_img_default} alt={currentWorkspace?.name} className="w-8 h-8 rounded shadow object-cover" />
+                    <Avatar src={currentWorkspace?.image} name={currentWorkspace?.name} className="w-8 h-8 rounded shadow" />
                     <div className="min-w-0 flex-1">
                         <p className="font-semibold text-gray-800 dark:text-white text-sm truncate">
                             {currentWorkspace?.name || "Select Workspace"}
@@ -67,7 +67,7 @@ function WorkspaceDropdown() {
                         )}
                         {workspaces.map((ws) => (
                             <div key={ws.id} onClick={() => onSelectWorkspace(ws.id)} className="flex items-center gap-3 p-2 cursor-pointer rounded hover:bg-gray-100 dark:hover:bg-zinc-800" >
-                                <img src={ws.image || assets.workspace_img_default} alt={ws.name} className="w-6 h-6 rounded object-cover" />
+                                <Avatar src={ws.image} name={ws.name} className="w-6 h-6 rounded" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-gray-800 dark:text-white truncate">
                                         {ws.name}

@@ -5,6 +5,7 @@ import { updateProfile, deactivateAccount } from "../../services/authService";
 import { setUser, forceLogout } from "../../features/authSlice";
 import toast from "react-hot-toast";
 import { Loader2Icon, ArrowLeftIcon, KeyRoundIcon, AlertTriangleIcon } from "lucide-react";
+import Avatar from "../../components/Avatar";
 
 // Logged-in user nijer profile (name + contact number) dekhe o update kore।
 const Profile = () => {
@@ -14,18 +15,38 @@ const Profile = () => {
 
     const [name, setName] = useState(user?.name || "");
     const [contactNumber, setContactNumber] = useState(user?.contactNumber || "");
+    const [image, setImage] = useState(null);       // File | null (notun image bachle)
+    const [preview, setPreview] = useState(user?.image || null);
     const [loading, setLoading] = useState(false);
     const [deactivating, setDeactivating] = useState(false);
+
+    const handleImage = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImage(file);
+            setPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            // contactNumber khali hole null pathai (clear kori), na hole value।
-            const updated = await updateProfile({
-                name,
-                contactNumber: contactNumber.trim() === "" ? null : contactNumber,
-            });
+            // image bachle multipart/form-data pathai, na hole plain object।
+            let updated;
+            if (image) {
+                const formData = new FormData();
+                formData.append("name", name);
+                formData.append("contactNumber", contactNumber.trim() === "" ? "" : contactNumber);
+                formData.append("image", image);
+                updated = await updateProfile(formData);
+            } else {
+                // contactNumber khali hole null pathai (clear kori), na hole value।
+                updated = await updateProfile({
+                    name,
+                    contactNumber: contactNumber.trim() === "" ? null : contactNumber,
+                });
+            }
             dispatch(setUser(updated)); // Redux e notun user boshai
             toast.success("Profile updated");
         } catch (error) {
@@ -73,6 +94,27 @@ const Profile = () => {
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Profile image (optional) */}
+                    <div>
+                        <label className="block text-sm text-gray-700 dark:text-zinc-300 mb-1">
+                            Profile image <span className="text-gray-400">(optional)</span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                            <label className="size-16 rounded-full border border-dashed border-gray-300 dark:border-zinc-700 cursor-pointer overflow-hidden hover:border-primary-500 transition block">
+                                <Avatar src={preview} name={name} className="size-full rounded-full" textSize="text-xl" />
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImage}
+                                    className="hidden"
+                                />
+                            </label>
+                            <p className="text-xs text-gray-400 dark:text-zinc-500">
+                                PNG, JPG. No image → default avatar stays.
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Email — read only (change kora jay na ei form theke) */}
                     <div>
                         <label className="block text-sm text-gray-700 dark:text-zinc-300 mb-1">Email</label>
