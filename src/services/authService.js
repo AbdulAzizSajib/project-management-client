@@ -68,10 +68,7 @@ export const deactivateAccount = async () => {
 
 // Google login — server-side redirect flow. XHR na, tai full-page navigation.
 // redirect param diye login shese kothay firbe seta bola jay.
-// VITE_API_BASE_PATH (same-origin, vercel.json rewrite diye backend e proxy hoy) —
-// VITE_API_URL (backend er real domain) dile googleLoginSuccess er Set-Cookie
-// backend domain e boshe jeto, frontend e na ashay abar /login e fere ashto।
 export const googleLoginUrl = (redirect = "/") => {
-    const base = import.meta.env.VITE_API_BASE_PATH;
+    const base = import.meta.env.VITE_API_URL + "/api/v1";
     return `${base}/auth/login/google?redirect=${encodeURIComponent(redirect)}`;
 };
