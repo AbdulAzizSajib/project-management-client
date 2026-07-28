@@ -4,11 +4,11 @@ import axios from "axios";
 // এখানে base URL আর cookie সেটিং একবার দিলে,
 // সব জায়গায় শুধু api.post("/auth/login") এভাবে ছোট করে লেখা যায়।
 const api = axios.create({
-    // dev e: http://localhost:5000 + /api/v1 (full backend origin)।
-    // prod e: VITE_API_BASE_PATH="/api" -> "/api/v1" (same-origin, vercel.json
-    // rewrite backend e proxy kore) — tai cookie gulo first-party hoy, browser
+    // dev e: VITE_API_BASE_PATH = http://localhost:5000/api/v1 (full backend origin)।
+    // prod e: VITE_API_BASE_PATH = /api/v1 (same-origin, vercel.json rewrite
+    // backend e proxy kore) — tai cookie gulo first-party hoy, browser
     // r third-party cookie block er shikar hoy na।
-    baseURL: import.meta.env.VITE_API_BASE_PATH + "/api/v1",
+    baseURL: import.meta.env.VITE_API_BASE_PATH,
 
     // ⭐ সবচেয়ে গুরুত্বপূর্ণ লাইন:
     // withCredentials: true দিলে প্রতিটা request এর সাথে
